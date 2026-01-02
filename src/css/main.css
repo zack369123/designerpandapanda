@@ -1,0 +1,1130 @@
+/* ==========================================================================
+   Custom Product Designer - Main Stylesheet
+   Inspired by Lumise UI/UX patterns with clean architecture
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   CSS Variables / Theme
+   -------------------------------------------------------------------------- */
+:root {
+    /* Primary Colors (Lumise-inspired teal) */
+    --primary-color: #3fc7ba;
+    --primary-hover: #35b0a4;
+    --primary-light: #e8f8f6;
+
+    /* Secondary Colors */
+    --secondary-color: #EE6C4D;
+    --secondary-hover: #d55a3d;
+
+    /* Neutral Colors */
+    --bg-color: #f3f5f5;
+    --bg-dark: #ebeced;
+    --surface-color: #ffffff;
+    --border-color: #e0e0e0;
+    --border-light: #f0f0f0;
+
+    /* Text Colors */
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    --text-inverse: #ffffff;
+
+    /* State Colors */
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --info-color: #3498db;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+
+    /* Layout */
+    --header-height: 56px;
+    --toolbar-height: 48px;
+    --sidebar-width: 280px;
+    --right-sidebar-width: 260px;
+
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+    --transition-slow: 0.4s ease;
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+}
+
+/* --------------------------------------------------------------------------
+   Reset & Base Styles
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background-color: var(--bg-color);
+}
+
+/* --------------------------------------------------------------------------
+   App Container
+   -------------------------------------------------------------------------- */
+#designer-app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+#designer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-height);
+    padding: 0 var(--spacing-md);
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    z-index: 100;
+}
+
+.header-left,
+.header-center,
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.header-center {
+    flex-direction: column;
+    gap: 2px;
+}
+
+.product-selector-container {
+    display: flex;
+    align-items: center;
+}
+
+.product-selector-container select {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    background-color: var(--surface-color);
+    cursor: pointer;
+    min-width: 200px;
+}
+
+.product-selector-container select:hover {
+    border-color: var(--primary-color);
+}
+
+.product-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+#product-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+#product-price {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.separator {
+    width: 1px;
+    height: 24px;
+    background: var(--border-color);
+    margin: 0 var(--spacing-xs);
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn.primary {
+    background: var(--primary-color);
+    color: var(--text-inverse);
+}
+
+.btn.primary:hover {
+    background: var(--primary-hover);
+}
+
+.btn.secondary {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+}
+
+.btn.secondary:hover {
+    background: var(--border-color);
+}
+
+.btn.danger {
+    background: var(--danger-color);
+    color: var(--text-inverse);
+}
+
+.btn.danger:hover {
+    background: #c0392b;
+}
+
+.btn.small {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 12px;
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-icon:hover {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+}
+
+.btn-icon:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-icon.small {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+}
+
+.btn-icon.active {
+    background: var(--primary-light);
+    color: var(--primary-color);
+}
+
+/* --------------------------------------------------------------------------
+   Dropdown Menu
+   -------------------------------------------------------------------------- */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    min-width: 220px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    padding: var(--spacing-xs) 0;
+    margin-top: var(--spacing-xs);
+}
+
+.dropdown.open .dropdown-menu {
+    display: block;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 13px;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--transition-fast);
+}
+
+.dropdown-item:hover {
+    background: var(--bg-dark);
+}
+
+.dropdown-item i {
+    width: 20px;
+    color: var(--text-secondary);
+}
+
+.dropdown-divider {
+    height: 1px;
+    margin: var(--spacing-xs) 0;
+    background: var(--border-color);
+}
+
+/* --------------------------------------------------------------------------
+   Context Toolbar
+   -------------------------------------------------------------------------- */
+#context-toolbar {
+    display: flex;
+    align-items: center;
+    height: var(--toolbar-height);
+    padding: 0 var(--spacing-md);
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.toolbar-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-right: var(--spacing-xs);
+}
+
+.btn-tool {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--surface-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-tool:hover {
+    background: var(--bg-dark);
+    border-color: var(--primary-color);
+}
+
+.btn-tool.active {
+    background: var(--primary-light);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.tool-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.tool-group label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.tool-group select,
+.tool-group input[type="number"] {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--surface-color);
+}
+
+.tool-group select {
+    min-width: 120px;
+}
+
+.tool-group input[type="number"] {
+    width: 60px;
+}
+
+.tool-group input[type="color"] {
+    width: 32px;
+    height: 28px;
+    padding: 2px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.tool-group input[type="range"] {
+    width: 100px;
+}
+
+/* --------------------------------------------------------------------------
+   Main Layout
+   -------------------------------------------------------------------------- */
+#designer-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Left Sidebar
+   -------------------------------------------------------------------------- */
+#left-sidebar {
+    display: flex;
+    width: var(--sidebar-width);
+    background: var(--surface-color);
+    border-right: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.sidebar-tabs {
+    display: flex;
+    flex-direction: column;
+    width: 56px;
+    padding: var(--spacing-sm);
+    background: var(--bg-dark);
+    border-right: 1px solid var(--border-color);
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-bottom: var(--spacing-xs);
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.tab-btn:hover {
+    background: var(--surface-color);
+    color: var(--text-primary);
+}
+
+.tab-btn.active {
+    background: var(--primary-color);
+    color: var(--text-inverse);
+}
+
+.sidebar-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Tab Panels
+   -------------------------------------------------------------------------- */
+.tab-panel {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.tab-panel.active {
+    display: flex;
+}
+
+.panel-header {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.panel-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+}
+
+.panel-header input[type="search"] {
+    width: 100%;
+    padding: var(--spacing-sm);
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.panel-body {
+    flex: 1;
+    padding: var(--spacing-md);
+    overflow-y: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Item Grids (Templates, Cliparts, Uploads)
+   -------------------------------------------------------------------------- */
+.item-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.grid-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.grid-item:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.item-thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--bg-color);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-xs);
+    overflow: hidden;
+}
+
+.item-thumb img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.item-thumb i {
+    font-size: 24px;
+    color: var(--text-muted);
+}
+
+.grid-item span {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   Text Panel
+   -------------------------------------------------------------------------- */
+.text-input-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.text-input-group textarea {
+    width: 100%;
+    height: 80px;
+    padding: var(--spacing-sm);
+    font-size: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    resize: vertical;
+    margin-bottom: var(--spacing-sm);
+}
+
+.text-presets h4 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-secondary);
+}
+
+.preset-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.text-preset {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-sm);
+    text-align: left;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--surface-color);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.text-preset:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+/* --------------------------------------------------------------------------
+   Shapes Panel
+   -------------------------------------------------------------------------- */
+.shapes-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.shape-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--surface-color);
+    font-size: 20px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.shape-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.shape-options h4 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-secondary);
+}
+
+.color-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.color-preset {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.color-preset:hover {
+    transform: scale(1.1);
+    border-color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Upload Zone
+   -------------------------------------------------------------------------- */
+.upload-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+    transition: all var(--transition-fast);
+}
+
+.upload-zone:hover,
+.upload-zone.drag-over {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.upload-zone i {
+    font-size: 36px;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-sm);
+}
+
+.upload-zone p {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.upload-zone span {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-bottom: var(--spacing-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Layers Panel
+   -------------------------------------------------------------------------- */
+.layer-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.layers-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.layer-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--surface-color);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.layer-item:hover {
+    background: var(--bg-color);
+}
+
+.layer-item.selected {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.layer-item.locked {
+    opacity: 0.6;
+}
+
+.layer-thumb {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--text-muted);
+    overflow: hidden;
+}
+
+.layer-thumb img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.layer-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.layer-name {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.layer-type {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.layer-actions-inline {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    text-align: center;
+}
+
+.empty-state i {
+    font-size: 32px;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-sm);
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   Canvas Area
+   -------------------------------------------------------------------------- */
+#canvas-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-color);
+    overflow: hidden;
+}
+
+#stage-tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stage-tab {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--surface-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.stage-tab:hover {
+    background: var(--bg-color);
+}
+
+.stage-tab.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--text-inverse);
+}
+
+#canvas-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg);
+    position: relative;
+    overflow: auto;
+}
+
+#canvas-wrapper {
+    position: relative;
+    background: var(--surface-color);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-sm);
+}
+
+#design-canvas {
+    display: block;
+}
+
+/* Dimension Display */
+#dimension-display {
+    position: absolute;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(0, 0, 0, 0.8);
+    color: var(--text-inverse);
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    pointer-events: none;
+    z-index: 100;
+}
+
+#dimension-display.hidden {
+    display: none;
+}
+
+/* Snap Guides */
+.snap-guide {
+    position: absolute;
+    background: var(--primary-color);
+    pointer-events: none;
+    z-index: 50;
+}
+
+.snap-guide.vertical {
+    width: 1px;
+    top: 0;
+    bottom: 0;
+}
+
+.snap-guide.horizontal {
+    height: 1px;
+    left: 0;
+    right: 0;
+}
+
+.snap-guide.hidden {
+    display: none;
+}
+
+/* Zoom Controls */
+#zoom-controls {
+    position: absolute;
+    bottom: var(--spacing-md);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--surface-color);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-md);
+}
+
+#zoom-level {
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 50px;
+    text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   Right Sidebar (Properties)
+   -------------------------------------------------------------------------- */
+#right-sidebar {
+    width: var(--right-sidebar-width);
+    background: var(--surface-color);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#right-sidebar .sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.properties-panel {
+    padding: var(--spacing-md);
+}
+
+.properties-panel.hidden {
+    display: none;
+}
+
+.property-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.property-group h4 {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-sm);
+}
+
+.property-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.property-row label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    min-width: 60px;
+}
+
+.property-row input[type="number"],
+.property-row input[type="text"] {
+    flex: 1;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.property-row input[type="range"] {
+    flex: 1;
+}
+
+.property-row input[type="checkbox"] {
+    margin-right: var(--spacing-xs);
+}
+
+.property-row .unit {
+    font-size: 12px;
+    color: var(--text-muted);
+    min-width: 20px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.action-buttons .btn {
+    flex: 1;
+}
+
+/* Price Display */
+#price-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    background: var(--primary-light);
+    border-top: 1px solid var(--border-color);
+}
+
+#price-display .label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+#price-display .price {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* --------------------------------------------------------------------------
+   Category Filter
+   -------------------------------------------------------------------------- */
+.category-filter {
+    margin-bottom: var(--spacing-md);
+}
+
+.category-filter select {
+    width: 100%;
+    padding: var(--spacing-sm);
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Utility Classes
+   -------------------------------------------------------------------------- */
+.hidden {
+    display: none !important;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+}
+
+/* --------------------------------------------------------------------------
+   Scrollbar Styling
+   -------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Adjustments
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+    :root {
+        --sidebar-width: 240px;
+        --right-sidebar-width: 220px;
+    }
+}
+
+@media (max-width: 768px) {
+    #left-sidebar,
+    #right-sidebar {
+        position: absolute;
+        z-index: 200;
+        height: calc(100% - var(--header-height) - var(--toolbar-height));
+        top: calc(var(--header-height) + var(--toolbar-height));
+        transform: translateX(-100%);
+        transition: transform var(--transition-normal);
+    }
+
+    #left-sidebar.open {
+        transform: translateX(0);
+    }
+
+    #right-sidebar {
+        right: 0;
+        left: auto;
+        transform: translateX(100%);
+    }
+
+    #right-sidebar.open {
+        transform: translateX(0);
+    }
+}

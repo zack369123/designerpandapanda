@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Product Designer - Test</title>
+
+    <!-- Fabric.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Our CSS -->
+    <link rel="stylesheet" href="src/css/main.css">
+</head>
+<body>
+    <div id="designer-app">
+        <!-- Top Navigation -->
+        <header id="designer-header">
+            <div class="header-left">
+                <button class="btn-icon" data-action="undo" disabled title="Undo (Ctrl+Z)">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button class="btn-icon" data-action="redo" disabled title="Redo (Ctrl+Y)">
+                    <i class="fas fa-redo"></i>
+                </button>
+                <div class="separator"></div>
+                <button class="btn-icon" data-action="save" title="Save Design">
+                    <i class="fas fa-save"></i>
+                </button>
+                <button class="btn-icon" data-action="load" title="Load Design">
+                    <i class="fas fa-folder-open"></i>
+                </button>
+            </div>
+
+            <div class="header-center">
+                <div class="product-selector-container">
+                    <select id="product-selector">
+                        <option value="">Select a Product...</option>
+                    </select>
+                </div>
+                <div class="product-info">
+                    <span id="product-name">Product Designer</span>
+                    <span id="product-price"></span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <button class="btn-icon" data-action="preview" title="Preview">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <div class="dropdown" id="export-dropdown">
+                    <button class="btn-icon dropdown-toggle" title="Download/Export">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        <button class="dropdown-item" data-action="download-screen">
+                            <i class="fas fa-desktop"></i>
+                            <span>Download (Screen - 72 DPI)</span>
+                        </button>
+                        <button class="dropdown-item" data-action="download-print">
+                            <i class="fas fa-print"></i>
+                            <span>Download (Print - 300 DPI)</span>
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item" data-action="download-json">
+                            <i class="fas fa-code"></i>
+                            <span>Export as JSON (Editable)</span>
+                        </button>
+                    </div>
+                </div>
+                <button class="btn primary" data-action="add-to-cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Add to Cart</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Context Toolbar - Changes based on selection -->
+        <div id="context-toolbar">
+            <!-- Default tools (nothing selected) -->
+            <div class="toolbar-group" data-context="default">
+                <span class="toolbar-label">Add:</span>
+                <button class="btn-tool" data-tool="add-text" title="Add Text">
+                    <i class="fas fa-font"></i>
+                    <span>Text</span>
+                </button>
+                <button class="btn-tool" data-tool="add-image" title="Add Image">
+                    <i class="fas fa-image"></i>
+                    <span>Image</span>
+                </button>
+                <button class="btn-tool" data-tool="add-shape" title="Add Shape">
+                    <i class="fas fa-shapes"></i>
+                    <span>Shape</span>
+                </button>
+                <div class="separator"></div>
+                <button class="btn-tool" data-tool="toggle-grid" title="Toggle Grid">
+                    <i class="fas fa-th"></i>
+                </button>
+                <button class="btn-tool" data-tool="toggle-guides" title="Toggle Guides">
+                    <i class="fas fa-ruler-combined"></i>
+                </button>
+            </div>
+
+            <!-- Text tools (text selected) -->
+            <div class="toolbar-group" data-context="text" style="display: none;">
+                <div class="tool-group">
+                    <label>Font:</label>
+                    <select id="font-family">
+                        <option value="Arial">Arial</option>
+                        <option value="Helvetica">Helvetica</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Impact">Impact</option>
+                    </select>
+                </div>
+                <div class="tool-group">
+                    <label>Size:</label>
+                    <input type="number" id="font-size" value="24" min="8" max="200">
+                </div>
+                <div class="separator"></div>
+                <button class="btn-tool" data-tool="bold" title="Bold">
+                    <i class="fas fa-bold"></i>
+                </button>
+                <button class="btn-tool" data-tool="italic" title="Italic">
+                    <i class="fas fa-italic"></i>
+                </button>
+                <button class="btn-tool" data-tool="underline" title="Underline">
+                    <i class="fas fa-underline"></i>
+                </button>
+                <div class="separator"></div>
+                <div class="tool-group">
+                    <label>Color:</label>
+                    <input type="color" id="text-color" value="#000000">
+                </div>
+                <div class="separator"></div>
+                <button class="btn-tool" data-tool="align-left" title="Align Left">
+                    <i class="fas fa-align-left"></i>
+                </button>
+                <button class="btn-tool" data-tool="align-center" title="Align Center">
+                    <i class="fas fa-align-center"></i>
+                </button>
+                <button class="btn-tool" data-tool="align-right" title="Align Right">
+                    <i class="fas fa-align-right"></i>
+                </button>
+            </div>
+
+            <!-- Image tools (image selected) -->
+            <div class="toolbar-group" data-context="image" style="display: none;">
+                <button class="btn-tool" data-tool="replace-image" title="Replace Image">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Replace</span>
+                </button>
+                <button class="btn-tool" data-tool="crop" title="Crop">
+                    <i class="fas fa-crop-alt"></i>
+                    <span>Crop</span>
+                </button>
+                <div class="separator"></div>
+                <button class="btn-tool" data-tool="flip-h" title="Flip Horizontal">
+                    <i class="fas fa-arrows-alt-h"></i>
+                </button>
+                <button class="btn-tool" data-tool="flip-v" title="Flip Vertical">
+                    <i class="fas fa-arrows-alt-v"></i>
+                </button>
+                <div class="separator"></div>
+                <div class="tool-group">
+                    <label>Opacity:</label>
+                    <input type="range" id="image-opacity" min="0" max="100" value="100">
+                </div>
+                <div class="separator"></div>
+                <select id="image-filter">
+                    <option value="none">No Filter</option>
+                    <option value="grayscale">Grayscale</option>
+                    <option value="sepia">Sepia</option>
+                    <option value="invert">Invert</option>
+                    <option value="brightness">Brightness</option>
+                </select>
+            </div>
+
+            <!-- Shape tools (shape selected) -->
+            <div class="toolbar-group" data-context="shape" style="display: none;">
+                <div class="tool-group">
+                    <label>Fill:</label>
+                    <input type="color" id="shape-fill" value="#3fc7ba">
+                </div>
+                <div class="tool-group">
+                    <label>Stroke:</label>
+                    <input type="color" id="shape-stroke" value="#000000">
+                </div>
+                <div class="tool-group">
+                    <label>Width:</label>
+                    <input type="number" id="stroke-width" value="0" min="0" max="20">
+                </div>
+                <div class="separator"></div>
+                <div class="tool-group">
+                    <label>Opacity:</label>
+                    <input type="range" id="shape-opacity" min="0" max="100" value="100">
+                </div>
+            </div>
+
+            <!-- Multiple selection tools -->
+            <div class="toolbar-group" data-context="multiple" style="display: none;">
+                <button class="btn-tool" data-tool="group" title="Group Objects">
+                    <i class="fas fa-object-group"></i>
+                    <span>Group</span>
+                </button>
+                <button class="btn-tool" data-tool="align-objects" title="Align Objects">
+                    <i class="fas fa-align-center"></i>
+                    <span>Align</span>
+                </button>
+                <div class="separator"></div>
+                <button class="btn-tool" data-tool="delete-selected" title="Delete Selected">
+                    <i class="fas fa-trash"></i>
+                    <span>Delete</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="designer-main">
+            <!-- Left Sidebar -->
+            <aside id="left-sidebar">
+                <nav class="sidebar-tabs">
+                    <button class="tab-btn active" data-tab="templates" title="Templates">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button class="tab-btn" data-tab="cliparts" title="Cliparts">
+                        <i class="fas fa-icons"></i>
+                    </button>
+                    <button class="tab-btn" data-tab="text" title="Text">
+                        <i class="fas fa-font"></i>
+                    </button>
+                    <button class="tab-btn" data-tab="shapes" title="Shapes">
+                        <i class="fas fa-shapes"></i>
+                    </button>
+                    <button class="tab-btn" data-tab="uploads" title="Uploads">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </button>
+                    <button class="tab-btn" data-tab="layers" title="Layers">
+                        <i class="fas fa-layer-group"></i>
+                    </button>
+                </nav>
+
+                <div class="sidebar-content">
+                    <!-- Templates Tab -->
+                    <div class="tab-panel active" data-panel="templates">
+                        <div class="panel-header">
+                            <h3>Templates</h3>
+                            <input type="search" placeholder="Search templates...">
+                        </div>
+                        <div class="panel-body">
+                            <div class="item-grid" id="templates-grid">
+                                <!-- Templates will be loaded here -->
+                                <div class="grid-item" data-template="blank">
+                                    <div class="item-thumb">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                    <span>Blank</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cliparts Tab -->
+                    <div class="tab-panel" data-panel="cliparts">
+                        <div class="panel-header">
+                            <h3>Cliparts</h3>
+                            <input type="search" placeholder="Search cliparts...">
+                        </div>
+                        <div class="panel-body">
+                            <div class="category-filter">
+                                <select id="clipart-category">
+                                    <option value="all">All Categories</option>
+                                    <option value="icons">Icons</option>
+                                    <option value="badges">Badges</option>
+                                    <option value="decorations">Decorations</option>
+                                </select>
+                            </div>
+                            <div class="item-grid" id="cliparts-grid">
+                                <!-- Cliparts will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Text Tab -->
+                    <div class="tab-panel" data-panel="text">
+                        <div class="panel-header">
+                            <h3>Add Text</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="text-input-group">
+                                <textarea id="new-text-input" placeholder="Enter your text here..."></textarea>
+                                <button class="btn primary" id="add-text-btn">
+                                    <i class="fas fa-plus"></i> Add Text
+                                </button>
+                            </div>
+                            <div class="text-presets">
+                                <h4>Text Presets</h4>
+                                <div class="preset-list">
+                                    <button class="text-preset" data-preset="heading">
+                                        <span style="font-size: 18px; font-weight: bold;">Heading</span>
+                                    </button>
+                                    <button class="text-preset" data-preset="subheading">
+                                        <span style="font-size: 14px; font-weight: 500;">Subheading</span>
+                                    </button>
+                                    <button class="text-preset" data-preset="body">
+                                        <span style="font-size: 12px;">Body Text</span>
+                                    </button>
+                                    <button class="text-preset" data-preset="curved">
+                                        <span style="font-style: italic;">Curved Text</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shapes Tab -->
+                    <div class="tab-panel" data-panel="shapes">
+                        <div class="panel-header">
+                            <h3>Shapes</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="shapes-grid">
+                                <button class="shape-btn" data-shape="rect" title="Rectangle">
+                                    <i class="far fa-square"></i>
+                                </button>
+                                <button class="shape-btn" data-shape="circle" title="Circle">
+                                    <i class="far fa-circle"></i>
+                                </button>
+                                <button class="shape-btn" data-shape="triangle" title="Triangle">
+                                    <i class="fas fa-play fa-rotate-270"></i>
+                                </button>
+                                <button class="shape-btn" data-shape="star" title="Star">
+                                    <i class="far fa-star"></i>
+                                </button>
+                                <button class="shape-btn" data-shape="heart" title="Heart">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                                <button class="shape-btn" data-shape="polygon" title="Polygon">
+                                    <i class="fas fa-draw-polygon"></i>
+                                </button>
+                                <button class="shape-btn" data-shape="line" title="Line">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <button class="shape-btn" data-shape="arrow" title="Arrow">
+                                    <i class="fas fa-long-arrow-alt-right"></i>
+                                </button>
+                            </div>
+                            <div class="shape-options">
+                                <h4>Quick Colors</h4>
+                                <div class="color-presets">
+                                    <button class="color-preset" data-color="#000000" style="background:#000000"></button>
+                                    <button class="color-preset" data-color="#ffffff" style="background:#ffffff"></button>
+                                    <button class="color-preset" data-color="#ff0000" style="background:#ff0000"></button>
+                                    <button class="color-preset" data-color="#00ff00" style="background:#00ff00"></button>
+                                    <button class="color-preset" data-color="#0000ff" style="background:#0000ff"></button>
+                                    <button class="color-preset" data-color="#ffff00" style="background:#ffff00"></button>
+                                    <button class="color-preset" data-color="#ff00ff" style="background:#ff00ff"></button>
+                                    <button class="color-preset" data-color="#00ffff" style="background:#00ffff"></button>
+                                    <button class="color-preset" data-color="#3fc7ba" style="background:#3fc7ba"></button>
+                                    <button class="color-preset" data-color="#EE6C4D" style="background:#EE6C4D"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Uploads Tab -->
+                    <div class="tab-panel" data-panel="uploads">
+                        <div class="panel-header">
+                            <h3>My Uploads</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="upload-zone" id="upload-dropzone">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Drag & drop images here</p>
+                                <span>or</span>
+                                <button class="btn secondary">Browse Files</button>
+                                <input type="file" id="file-input" accept="image/*" multiple hidden>
+                            </div>
+                            <div class="item-grid" id="uploads-grid">
+                                <!-- User uploads will appear here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layers Tab -->
+                    <div class="tab-panel" data-panel="layers">
+                        <div class="panel-header">
+                            <h3>Layers</h3>
+                            <div class="layer-actions">
+                                <button class="btn-icon small" data-action="layer-up" title="Move Up">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
+                                <button class="btn-icon small" data-action="layer-down" title="Move Down">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="layers-list" id="layers-list">
+                                <!-- Layers will be rendered here -->
+                                <div class="empty-state">
+                                    <i class="fas fa-layer-group"></i>
+                                    <p>No layers yet</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Canvas Area -->
+            <main id="canvas-area">
+                <!-- Stage Tabs (for multi-sided products) -->
+                <div id="stage-tabs">
+                    <button class="stage-tab active" data-stage="front">Front</button>
+                    <button class="stage-tab" data-stage="back">Back</button>
+                    <!-- More stages can be added dynamically -->
+                </div>
+
+                <!-- Canvas Container -->
+                <div id="canvas-container">
+                    <div id="canvas-wrapper">
+                        <canvas id="design-canvas"></canvas>
+                    </div>
+
+                    <!-- Dimension Display (shows during resize/move) -->
+                    <div id="dimension-display" class="hidden">
+                        <span id="dim-width">0</span> × <span id="dim-height">0</span>
+                    </div>
+
+                    <!-- Snap Guides -->
+                    <div id="snap-guide-v" class="snap-guide vertical hidden"></div>
+                    <div id="snap-guide-h" class="snap-guide horizontal hidden"></div>
+                </div>
+
+                <!-- Zoom Controls -->
+                <div id="zoom-controls">
+                    <button class="btn-icon" data-action="zoom-out" title="Zoom Out">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <span id="zoom-level">100%</span>
+                    <button class="btn-icon" data-action="zoom-in" title="Zoom In">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="btn-icon" data-action="zoom-fit" title="Fit to Screen">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+            </main>
+
+            <!-- Right Sidebar (Properties) -->
+            <aside id="right-sidebar">
+                <div class="sidebar-header">
+                    <h3>Properties</h3>
+                    <button class="btn-icon small" id="close-properties">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="sidebar-content">
+                    <!-- No selection state -->
+                    <div class="properties-panel" data-panel="none">
+                        <div class="empty-state">
+                            <i class="fas fa-mouse-pointer"></i>
+                            <p>Select an object to edit its properties</p>
+                        </div>
+                    </div>
+
+                    <!-- Object properties (shown when object selected) -->
+                    <div class="properties-panel hidden" data-panel="object">
+                        <div class="property-group">
+                            <h4>Position (inches)</h4>
+                            <div class="property-row">
+                                <label>X:</label>
+                                <input type="number" id="prop-x" value="0" step="0.01">
+                                <span class="unit">in</span>
+                            </div>
+                            <div class="property-row">
+                                <label>Y:</label>
+                                <input type="number" id="prop-y" value="0" step="0.01">
+                                <span class="unit">in</span>
+                            </div>
+                        </div>
+                        <div class="property-group">
+                            <h4>Size (inches)</h4>
+                            <div class="property-row">
+                                <label>W:</label>
+                                <input type="number" id="prop-width" value="0" step="0.01" min="0.1">
+                                <span class="unit">in</span>
+                            </div>
+                            <div class="property-row">
+                                <label>H:</label>
+                                <input type="number" id="prop-height" value="0" step="0.01" min="0.1">
+                                <span class="unit">in</span>
+                            </div>
+                            <div class="property-row">
+                                <label>
+                                    <input type="checkbox" id="prop-lock-ratio" checked>
+                                    Lock aspect ratio
+                                </label>
+                            </div>
+                        </div>
+                        <div class="property-group">
+                            <h4>Transform</h4>
+                            <div class="property-row">
+                                <label>Rotation:</label>
+                                <input type="number" id="prop-rotation" value="0" min="-360" max="360">
+                                <span>°</span>
+                            </div>
+                            <div class="property-row">
+                                <label>Opacity:</label>
+                                <input type="range" id="prop-opacity" value="100" min="0" max="100">
+                                <span id="prop-opacity-val">100%</span>
+                            </div>
+                        </div>
+                        <div class="property-group">
+                            <h4>Actions</h4>
+                            <div class="action-buttons">
+                                <button class="btn secondary small" data-action="duplicate">
+                                    <i class="fas fa-copy"></i> Duplicate
+                                </button>
+                                <button class="btn danger small" data-action="delete">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn secondary small" data-action="lock">
+                                    <i class="fas fa-lock"></i> Lock
+                                </button>
+                                <button class="btn secondary small" data-action="bring-front">
+                                    <i class="fas fa-chevron-up"></i> Front
+                                </button>
+                                <button class="btn secondary small" data-action="send-back">
+                                    <i class="fas fa-chevron-down"></i> Back
+                                </button>
+                            </div>
+                        </div>
+                        <div class="property-group">
+                            <h4>Image Tools</h4>
+                            <div class="action-buttons">
+                                <button class="btn secondary small" data-action="trim-transparency" title="Remove transparent pixels around image">
+                                    <i class="fas fa-crop-alt"></i> Trim
+                                </button>
+                                <button class="btn primary small" data-action="max-size" title="Scale to fill print area">
+                                    <i class="fas fa-expand-arrows-alt"></i> Max Size
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Display -->
+                <div id="price-display">
+                    <span class="label">Total Price:</span>
+                    <span class="price" id="total-price">$0.00</span>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Hidden file input for image uploads -->
+    <input type="file" id="image-upload-input" accept="image/*" hidden>
+
+    <!-- Our JavaScript Modules -->
+    <script type="module" src="src/js/main.js"></script>
+</body>
+</html>
