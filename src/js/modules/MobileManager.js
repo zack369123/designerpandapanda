@@ -130,11 +130,12 @@ export class MobileManager {
             this.setupBottomSheetGestures();
         }
 
-        // Listen for canvas object selection
-        if (this.designer?.canvas) {
-            this.designer.canvas.on('selection:created', () => this.onObjectSelected());
-            this.designer.canvas.on('selection:updated', () => this.onObjectSelected());
-            this.designer.canvas.on('selection:cleared', () => this.onSelectionCleared());
+        // Listen for canvas object selection (fabricCanvas is the actual Fabric.js canvas)
+        const fabricCanvas = this.designer?.canvas?.fabricCanvas;
+        if (fabricCanvas) {
+            fabricCanvas.on('selection:created', () => this.onObjectSelected());
+            fabricCanvas.on('selection:updated', () => this.onObjectSelected());
+            fabricCanvas.on('selection:cleared', () => this.onSelectionCleared());
         }
     }
 
@@ -350,9 +351,9 @@ export class MobileManager {
     }
 
     updateMobileToolPanel() {
-        if (!this.elements.mobileToolPanel || !this.designer?.canvas) return;
+        if (!this.elements.mobileToolPanel || !this.designer?.canvas?.fabricCanvas) return;
 
-        const activeObject = this.designer.canvas.getActiveObject();
+        const activeObject = this.designer.canvas.fabricCanvas.getActiveObject();
         if (!activeObject) {
             this.hideMobileToolPanel();
             return;
@@ -438,7 +439,8 @@ export class MobileManager {
     }
 
     scaleCanvasForViewport() {
-        if (!this.designer?.canvas || !this.elements.canvasWrapper) return;
+        const fabricCanvas = this.designer?.canvas?.fabricCanvas;
+        if (!fabricCanvas || !this.elements.canvasWrapper) return;
 
         // Only apply scaling on mobile
         if (!this.isMobile) {
@@ -446,8 +448,8 @@ export class MobileManager {
             return;
         }
 
-        const canvas = this.designer.canvas;
-        const canvasWidth = canvas.getWidth();
+        const canvasWidth = fabricCanvas.getWidth();
+        const canvasHeight = fabricCanvas.getHeight();
         const containerWidth = this.elements.canvasContainer?.clientWidth || this.windowWidth;
         const containerHeight = this.elements.canvasContainer?.clientHeight || this.windowHeight;
 
@@ -457,7 +459,7 @@ export class MobileManager {
         const availableHeight = containerHeight - (padding * 2);
 
         const scaleX = availableWidth / canvasWidth;
-        const scaleY = availableHeight / canvas.getHeight();
+        const scaleY = availableHeight / canvasHeight;
         const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
 
         if (scale < 1) {

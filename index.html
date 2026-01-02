@@ -207,8 +207,8 @@
                     <i class="fas fa-times"></i>
                 </button>
                 <nav class="sidebar-tabs">
-                    <button class="tab-btn active" data-tab="templates" title="Templates">
-                        <i class="fas fa-th-large"></i>
+                    <button class="tab-btn active" data-tab="order" title="Order">
+                        <i class="fas fa-shopping-bag"></i>
                     </button>
                     <button class="tab-btn" data-tab="text" title="Text">
                         <i class="fas fa-font"></i>
@@ -225,20 +225,42 @@
                 </nav>
 
                 <div class="sidebar-content">
-                    <!-- Templates Tab -->
-                    <div class="tab-panel active" data-panel="templates">
+                    <!-- Order Tab -->
+                    <div class="tab-panel active" data-panel="order">
                         <div class="panel-header">
-                            <h3>Templates</h3>
-                            <input type="search" placeholder="Search templates...">
+                            <h3>Your Order</h3>
                         </div>
                         <div class="panel-body">
-                            <div class="item-grid" id="templates-grid">
-                                <!-- Templates will be loaded here -->
-                                <div class="grid-item" data-template="blank">
-                                    <div class="item-thumb">
-                                        <i class="fas fa-plus"></i>
-                                    </div>
-                                    <span>Blank</span>
+                            <!-- Color Selection -->
+                            <div class="order-section" id="order-color-section">
+                                <h4 class="order-section-title">Select Color</h4>
+                                <div class="order-color-swatches" id="order-color-swatches">
+                                    <!-- Colors will be rendered dynamically -->
+                                </div>
+                                <p class="order-color-name" id="order-color-name"></p>
+                            </div>
+
+                            <!-- Size Quantities -->
+                            <div class="order-section" id="order-sizes-section">
+                                <h4 class="order-section-title">Select Quantities</h4>
+                                <div class="order-sizes-grid" id="order-sizes-grid">
+                                    <!-- Size quantities will be rendered dynamically -->
+                                </div>
+                                <div class="order-total-qty">
+                                    <span>Total Items:</span>
+                                    <span id="order-total-qty-value">0</span>
+                                </div>
+                            </div>
+
+                            <!-- Order Summary -->
+                            <div class="order-section order-summary" id="order-summary-section">
+                                <h4 class="order-section-title">Order Summary</h4>
+                                <div class="order-summary-lines" id="order-summary-lines">
+                                    <!-- Summary will be rendered dynamically -->
+                                </div>
+                                <div class="order-summary-total">
+                                    <span>Total:</span>
+                                    <span id="order-summary-total">$0.00</span>
                                 </div>
                             </div>
                         </div>
@@ -347,19 +369,11 @@
                         <!-- More stages can be added dynamically -->
                     </div>
 
-                    <!-- Color Selector -->
+                    <!-- Color Selector (desktop quick access) -->
                     <div id="color-selector">
                         <span class="color-label">Color:</span>
                         <div id="color-swatches">
                             <!-- Colors will be rendered dynamically -->
-                        </div>
-                    </div>
-
-                    <!-- Size Quantities (Bulk Order) -->
-                    <div id="size-quantities">
-                        <span class="size-label">Quantities:</span>
-                        <div id="size-qty-grid">
-                            <!-- Sizes with quantity selectors will be rendered dynamically -->
                         </div>
                     </div>
                 </div>
@@ -511,9 +525,9 @@
         <!-- Bottom Navigation Bar (Mobile Only) -->
         <nav id="bottom-nav">
             <div class="bottom-nav-items">
-                <button class="bottom-nav-item" data-tab="templates" title="Templates">
-                    <i class="fas fa-th-large"></i>
-                    <span>Templates</span>
+                <button class="bottom-nav-item" data-tab="order" title="Order">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Order</span>
                 </button>
                 <button class="bottom-nav-item" data-tab="text" title="Text">
                     <i class="fas fa-font"></i>

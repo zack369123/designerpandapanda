@@ -57,11 +57,11 @@ export class Designer {
         // Set up product selector
         this.setupProductSelector();
 
-        // Set up color selector
+        // Set up color selector (in product controls)
         this.setupColorSelector();
 
-        // Set up size quantities (bulk order)
-        this.setupSizeQuantities();
+        // Set up Order panel (colors + sizes + summary in sidebar)
+        this.setupOrderPanel();
 
         // Set up VAS panel
         this.setupVASPanel();
@@ -186,9 +186,12 @@ export class Designer {
         const view = this.productLoader.switchColorById(colorId);
         if (!view) return;
 
-        // Update color swatches UI
+        // Update color swatches UI (product controls bar)
         const colors = this.productLoader.getColors();
         this.renderColorSwatches(colors);
+
+        // Update Order panel colors
+        this.renderOrderColors(colors);
 
         // Reload the current view with new color's image
         this.events.emit('color:changed', { colorId, view });
@@ -203,67 +206,215 @@ export class Designer {
     }
 
     /**
-     * Set up size quantities (bulk order)
+     * Set up Order panel (colors, sizes, summary in sidebar)
      */
-    setupSizeQuantities() {
-        const qtyGrid = document.getElementById('size-qty-grid');
-        if (!qtyGrid) return;
+    setupOrderPanel() {
+        // Event delegation for Order panel color swatches
+        const orderColorSwatches = document.getElementById('order-color-swatches');
+        if (orderColorSwatches) {
+            orderColorSwatches.addEventListener('click', (e) => {
+                const swatch = e.target.closest('.order-color-swatch');
+                if (!swatch) return;
 
-        // Event delegation for quantity buttons
-        qtyGrid.addEventListener('click', (e) => {
-            const btn = e.target.closest('.size-qty-btn');
-            if (!btn) return;
+                const colorId = swatch.dataset.colorId;
+                if (colorId) {
+                    this.switchColor(colorId);
+                }
+            });
+        }
 
-            const sizeId = btn.dataset.sizeId;
-            const action = btn.dataset.action;
+        // Event delegation for Order panel size quantity buttons
+        const orderSizesGrid = document.getElementById('order-sizes-grid');
+        if (orderSizesGrid) {
+            orderSizesGrid.addEventListener('click', (e) => {
+                const btn = e.target.closest('.order-qty-btn');
+                if (!btn) return;
 
-            if (sizeId && action) {
-                this.updateSizeQuantity(sizeId, action);
-            }
-        });
+                const sizeId = btn.dataset.sizeId;
+                const action = btn.dataset.action;
+
+                if (sizeId && action) {
+                    this.updateSizeQuantity(sizeId, action);
+                }
+            });
+        }
     }
 
     /**
-     * Render size quantities grid for current product
+     * Render colors in Order panel
      */
-    renderSizeQuantities(sizes) {
-        const grid = document.getElementById('size-qty-grid');
-        const container = document.getElementById('size-quantities');
+    renderOrderColors(colors) {
+        const container = document.getElementById('order-color-swatches');
+        const colorNameEl = document.getElementById('order-color-name');
+        const colorSection = document.getElementById('order-color-section');
 
-        if (!grid) return;
+        if (!container) return;
 
-        // Hide if no sizes
-        if (!sizes || sizes.length === 0) {
-            if (container) container.style.display = 'none';
+        // Hide section if no colors or only one
+        if (!colors || colors.length <= 1) {
+            if (colorSection) colorSection.style.display = 'none';
             return;
         }
 
-        // Show the container
-        if (container) container.style.display = 'flex';
+        if (colorSection) colorSection.style.display = 'block';
+
+        // Helper to determine if a color is light
+        const isLightColor = (hex) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            return brightness > 180;
+        };
+
+        container.innerHTML = colors.map(color => `
+            <button
+                class="order-color-swatch ${color.isActive ? 'active' : ''} ${isLightColor(color.colorCode) ? 'light-color' : ''}"
+                data-color-id="${color.id}"
+                style="background-color: ${color.colorCode}"
+                title="${color.name}"
+            ></button>
+        `).join('');
+
+        // Show active color name
+        const activeColor = colors.find(c => c.isActive);
+        if (colorNameEl && activeColor) {
+            colorNameEl.textContent = activeColor.name;
+        }
+    }
+
+    /**
+     * Render size quantities in Order panel
+     */
+    renderOrderSizes(sizes) {
+        const grid = document.getElementById('order-sizes-grid');
+        const sizesSection = document.getElementById('order-sizes-section');
+        const totalQtyEl = document.getElementById('order-total-qty-value');
+
+        if (!grid) return;
+
+        // Hide section if no sizes
+        if (!sizes || sizes.length === 0) {
+            if (sizesSection) sizesSection.style.display = 'none';
+            return;
+        }
+
+        if (sizesSection) sizesSection.style.display = 'block';
 
         const quantities = this.productLoader.getSizeQuantities();
+        let totalQty = 0;
 
         grid.innerHTML = sizes.map(size => {
             const qty = quantities[size.id] || 0;
+            totalQty += qty;
             const hasQty = qty > 0;
-            const upchargeText = size.upcharge > 0 ? `<span class="size-qty-upcharge">+$${size.upcharge.toFixed(2)}</span>` : '';
+            const upchargeText = size.upcharge > 0 ? `<span class="order-size-upcharge">+$${size.upcharge.toFixed(2)}</span>` : '';
 
             return `
-                <div class="size-qty-item ${hasQty ? 'has-qty' : ''}" data-size-id="${size.id}">
-                    <span class="size-qty-name">${size.name}</span>
-                    ${upchargeText}
-                    <div class="size-qty-controls">
-                        <button class="size-qty-btn" data-size-id="${size.id}" data-action="decrease" ${qty === 0 ? 'disabled' : ''}>
+                <div class="order-size-row ${hasQty ? 'has-qty' : ''}" data-size-id="${size.id}">
+                    <div class="order-size-info">
+                        <span class="order-size-name">${size.name}</span>
+                        ${upchargeText}
+                    </div>
+                    <div class="order-size-controls">
+                        <button class="order-qty-btn" data-size-id="${size.id}" data-action="decrease" ${qty === 0 ? 'disabled' : ''}>
                             <i class="fas fa-minus"></i>
                         </button>
-                        <span class="size-qty-value">${qty}</span>
-                        <button class="size-qty-btn" data-size-id="${size.id}" data-action="increase">
+                        <span class="order-qty-value">${qty}</span>
+                        <button class="order-qty-btn" data-size-id="${size.id}" data-action="increase">
                             <i class="fas fa-plus"></i>
                         </button>
                     </div>
                 </div>
             `;
         }).join('');
+
+        // Update total quantity
+        if (totalQtyEl) {
+            totalQtyEl.textContent = totalQty;
+        }
+
+        // Update order summary
+        this.renderOrderSummary();
+    }
+
+    /**
+     * Render order summary with pricing
+     */
+    renderOrderSummary() {
+        const linesContainer = document.getElementById('order-summary-lines');
+        const totalEl = document.getElementById('order-summary-total');
+        const rightPriceEl = document.getElementById('total-price');
+
+        if (!linesContainer || !this.currentProduct) return;
+
+        const sizes = this.productLoader.getSizes();
+        const quantities = this.productLoader.getSizeQuantities();
+        const selectedVAS = this.productLoader.getSelectedVAS();
+        const vas = this.productLoader.getVAS();
+
+        let lines = [];
+        let subtotal = 0;
+        let totalQty = 0;
+
+        // Calculate per-size totals
+        sizes.forEach(size => {
+            const qty = quantities[size.id] || 0;
+            if (qty > 0) {
+                totalQty += qty;
+                const basePrice = this.currentProduct.price || 0;
+                const upcharge = size.upcharge || 0;
+                const lineTotal = qty * (basePrice + upcharge);
+                subtotal += lineTotal;
+
+                lines.push(`
+                    <div class="order-summary-line size-line">
+                        <span>${size.name} × ${qty}</span>
+                        <span>$${lineTotal.toFixed(2)}</span>
+                    </div>
+                `);
+            }
+        });
+
+        // Add VAS if selected
+        if (selectedVAS.foldAndBag && vas?.foldAndBag?.enabled) {
+            const vasTotal = totalQty * vas.foldAndBag.price;
+            subtotal += vasTotal;
+            lines.push(`
+                <div class="order-summary-line">
+                    <span>Fold & Bag × ${totalQty}</span>
+                    <span>$${vasTotal.toFixed(2)}</span>
+                </div>
+            `);
+        }
+
+        if (selectedVAS.neckTags && vas?.neckTags?.enabled) {
+            const vasTotal = totalQty * vas.neckTags.price;
+            subtotal += vasTotal;
+            lines.push(`
+                <div class="order-summary-line">
+                    <span>Neck Tags × ${totalQty}</span>
+                    <span>$${vasTotal.toFixed(2)}</span>
+                </div>
+            `);
+        }
+
+        // Render lines
+        if (lines.length === 0) {
+            linesContainer.innerHTML = '<div class="order-summary-line"><span>No items selected</span></div>';
+        } else {
+            linesContainer.innerHTML = lines.join('');
+        }
+
+        // Update totals
+        if (totalEl) {
+            totalEl.textContent = `$${subtotal.toFixed(2)}`;
+        }
+
+        // Also update the right sidebar price
+        if (rightPriceEl) {
+            rightPriceEl.textContent = `$${subtotal.toFixed(2)}`;
+        }
     }
 
     /**
@@ -281,9 +432,9 @@ export class Designer {
 
         this.productLoader.setSizeQuantity(sizeId, currentQty);
 
-        // Re-render the grid
+        // Re-render Order panel sizes
         const sizes = this.productLoader.getSizes();
-        this.renderSizeQuantities(sizes);
+        this.renderOrderSizes(sizes);
 
         // Re-render VAS panel (neck tags depend on selected sizes)
         this.renderVASPanel();
@@ -451,6 +602,9 @@ export class Designer {
 
         itemElement.classList.toggle('active');
         this.events.emit('vas:changed', { serviceType, enabled: !isActive });
+
+        // Update order summary to reflect VAS changes
+        this.renderOrderSummary();
     }
 
     /**
@@ -517,11 +671,12 @@ export class Designer {
         // Update product info display
         this.updateProductInfo(productData);
 
-        // Render color swatches
+        // Render color swatches (product controls bar)
         this.renderColorSwatches(productData.colors);
 
-        // Render size quantities (bulk order)
-        this.renderSizeQuantities(productData.sizes);
+        // Render Order panel (sidebar)
+        this.renderOrderColors(productData.colors);
+        this.renderOrderSizes(productData.sizes);
 
         // Render VAS panel
         this.renderVASPanel();
@@ -676,7 +831,8 @@ export class Designer {
     fitCanvasToContainer() {
         const container = document.getElementById('canvas-container');
         const wrapper = document.getElementById('canvas-wrapper');
-        if (!container || !wrapper || !this.canvas) return;
+        const fabricCanvas = this.canvas?.fabricCanvas;
+        if (!container || !wrapper || !fabricCanvas) return;
 
         const isMobile = window.innerWidth < 768;
         const padding = isMobile ? 16 : 32;
@@ -685,8 +841,8 @@ export class Designer {
         const containerWidth = container.clientWidth - (padding * 2);
         const containerHeight = container.clientHeight - (padding * 2) - bottomNavHeight;
 
-        const canvasWidth = this.canvas.getWidth();
-        const canvasHeight = this.canvas.getHeight();
+        const canvasWidth = fabricCanvas.getWidth();
+        const canvasHeight = fabricCanvas.getHeight();
 
         // Calculate scale to fit
         const scaleX = containerWidth / canvasWidth;
