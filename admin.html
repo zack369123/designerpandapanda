@@ -286,6 +286,25 @@
                                                         <i class="fas fa-info-circle"></i>
                                                         This is the actual print size. The blue box position defines where it appears on the product.
                                                     </p>
+
+                                                    <!-- View-specific pricing -->
+                                                    <div class="view-pricing-section">
+                                                        <h5><i class="fas fa-dollar-sign"></i> View Pricing</h5>
+                                                        <div class="form-group">
+                                                            <label class="checkbox-label">
+                                                                <input type="checkbox" id="view-always-charge">
+                                                                <span>Always charge extra for this view</span>
+                                                            </label>
+                                                            <p class="help-text">
+                                                                Enable this for special locations (like sleeves) that should always have an extra charge, even if it's the first/only print location used.
+                                                            </p>
+                                                        </div>
+                                                        <div class="form-group view-extra-price-group" id="view-extra-price-group" style="display: none;">
+                                                            <label>Extra Price ($)</label>
+                                                            <input type="number" id="view-extra-price" step="0.01" value="0" min="0">
+                                                            <p class="help-text">This amount is added when this view is used.</p>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -343,7 +362,7 @@
                                         <div class="vas-layout">
                                             <p class="help-text mb-2">
                                                 <i class="fas fa-info-circle"></i>
-                                                Configure optional services customers can add to their order.
+                                                Enable which services are available for this product. Pricing is set globally in <strong>Pricing Rules</strong>.
                                             </p>
 
                                             <!-- Fold and Bag -->
@@ -358,15 +377,9 @@
                                                     </div>
                                                 </div>
                                                 <div class="card-body vas-options" id="vas-fold-bag-options">
-                                                    <div class="form-row">
-                                                        <div class="form-group">
-                                                            <label>Price ($)</label>
-                                                            <input type="number" id="vas-fold-bag-price" step="0.01" value="0" min="0">
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label>Description (optional)</label>
-                                                            <input type="text" id="vas-fold-bag-desc" placeholder="e.g., Individual poly bag packaging">
-                                                        </div>
+                                                    <div class="form-group">
+                                                        <label>Description (shown to customers)</label>
+                                                        <input type="text" id="vas-fold-bag-desc" placeholder="e.g., Individual poly bag packaging">
                                                     </div>
                                                 </div>
                                             </div>
@@ -383,15 +396,9 @@
                                                     </div>
                                                 </div>
                                                 <div class="card-body vas-options" id="vas-neck-tags-options">
-                                                    <div class="form-row">
-                                                        <div class="form-group">
-                                                            <label>Price per tag ($)</label>
-                                                            <input type="number" id="vas-neck-tags-price" step="0.01" value="0" min="0">
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label>Description (optional)</label>
-                                                            <input type="text" id="vas-neck-tags-desc" placeholder="e.g., Custom printed neck label">
-                                                        </div>
+                                                    <div class="form-group">
+                                                        <label>Description (shown to customers)</label>
+                                                        <input type="text" id="vas-neck-tags-desc" placeholder="e.g., Custom printed neck label">
                                                     </div>
                                                     <p class="help-text">
                                                         <i class="fas fa-lightbulb"></i>
@@ -458,37 +465,44 @@
                         </button>
                     </div>
                     <div class="section-body">
+                        <p class="help-text mb-2">
+                            <i class="fas fa-info-circle"></i>
+                            Base product price comes from WooCommerce. These rules add print and service charges.
+                        </p>
+
                         <div class="card">
                             <div class="card-header">
-                                <h4>Per-Element Pricing</h4>
+                                <h4><i class="fas fa-layer-group"></i> Print Location Pricing</h4>
                             </div>
                             <div class="card-body">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Per Text Element ($)</label>
-                                        <input type="number" id="price-per-text" step="0.01" value="0">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Per Image Element ($)</label>
-                                        <input type="number" id="price-per-image" step="0.01" value="0">
-                                    </div>
+                                <div class="form-group">
+                                    <label>Additional View/Location Price ($)</label>
+                                    <input type="number" id="price-additional-view" step="0.01" value="0" min="0">
+                                    <p class="help-text">
+                                        First print location is free. This price is added for each additional location used (2nd, 3rd, etc.).
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="card">
                             <div class="card-header">
-                                <h4>Print Area Pricing</h4>
+                                <h4><i class="fas fa-concierge-bell"></i> Value Added Services (Per Item)</h4>
                             </div>
                             <div class="card-body">
+                                <p class="help-text mb-2">
+                                    These prices are charged PER ITEM in the order. Example: 10 shirts × $1.50 = $15.00
+                                </p>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label>Additional Side/View ($)</label>
-                                        <input type="number" id="price-per-view" step="0.01" value="0">
+                                        <label><i class="fas fa-box-open"></i> Fold & Bag ($ per item)</label>
+                                        <input type="number" id="price-fold-bag" step="0.01" value="0" min="0">
+                                        <p class="help-text">Individual poly bag packaging per item</p>
                                     </div>
                                     <div class="form-group">
-                                        <label>Full Coverage Surcharge ($)</label>
-                                        <input type="number" id="price-full-coverage" step="0.01" value="0">
+                                        <label><i class="fas fa-tag"></i> Neck Tags ($ per item)</label>
+                                        <input type="number" id="price-neck-tags" step="0.01" value="0" min="0">
+                                        <p class="help-text">Custom printed neck label per item</p>
                                     </div>
                                 </div>
                             </div>

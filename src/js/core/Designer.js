@@ -242,6 +242,20 @@ export class Designer {
                 }
             });
         }
+
+        // Event delegation for Order panel VAS toggles
+        const orderVasOptions = document.getElementById('order-vas-options');
+        if (orderVasOptions) {
+            orderVasOptions.addEventListener('click', (e) => {
+                const vasItem = e.target.closest('.order-vas-item');
+                if (!vasItem) return;
+
+                const vasType = vasItem.dataset.vasType;
+                if (vasType) {
+                    this.toggleOrderVAS(vasType, vasItem);
+                }
+            });
+        }
     }
 
     /**
@@ -343,6 +357,112 @@ export class Designer {
     }
 
     /**
+     * Render VAS options in Order panel
+     */
+    renderOrderVAS() {
+        const container = document.getElementById('order-vas-options');
+        const vasSection = document.getElementById('order-vas-section');
+
+        if (!container || !this.currentProduct) return;
+
+        const vas = this.currentProduct.vas;
+        const selectedVAS = this.productLoader.getSelectedVAS();
+        const pricing = this.productLoader.getPricing();
+        const totalQty = this.productLoader.getTotalQuantity();
+
+        // Check if any VAS is enabled for this product
+        const hasFoldBag = vas?.foldAndBag?.enabled;
+        const hasNeckTags = vas?.neckTags?.enabled;
+
+        if (!hasFoldBag && !hasNeckTags) {
+            if (vasSection) vasSection.style.display = 'none';
+            return;
+        }
+
+        if (vasSection) vasSection.style.display = 'block';
+
+        let html = '';
+
+        // Fold & Bag
+        if (hasFoldBag) {
+            const isActive = selectedVAS.foldAndBag;
+            const pricePerItem = pricing.foldAndBag || 0;
+            const desc = vas.foldAndBag.description || 'Individual poly bag packaging';
+
+            html += `
+                <div class="order-vas-item ${isActive ? 'active' : ''}" data-vas-type="foldAndBag">
+                    <div class="order-vas-checkbox">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="order-vas-content">
+                        <div class="order-vas-header">
+                            <span class="order-vas-name"><i class="fas fa-box-open"></i> Fold & Bag</span>
+                            <span class="order-vas-price">+$${pricePerItem.toFixed(2)}/item</span>
+                        </div>
+                        <p class="order-vas-desc">${desc}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Neck Tags
+        if (hasNeckTags) {
+            const isActive = selectedVAS.neckTags;
+            const pricePerItem = pricing.neckTags || 0;
+            const desc = vas.neckTags.description || 'Custom printed neck label';
+
+            html += `
+                <div class="order-vas-item ${isActive ? 'active' : ''}" data-vas-type="neckTags">
+                    <div class="order-vas-checkbox">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="order-vas-content">
+                        <div class="order-vas-header">
+                            <span class="order-vas-name"><i class="fas fa-tag"></i> Neck Tags</span>
+                            <span class="order-vas-price">+$${pricePerItem.toFixed(2)}/item</span>
+                        </div>
+                        <p class="order-vas-desc">${desc}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    }
+
+    /**
+     * Toggle VAS in Order panel
+     */
+    toggleOrderVAS(vasType, itemElement) {
+        const isActive = itemElement.classList.contains('active');
+
+        // For neck tags, check if any sizes have quantity > 0 across ALL colors
+        if (vasType === 'neckTags' && !isActive) {
+            const totalQty = this.productLoader.getTotalQuantity();
+            if (totalQty === 0) {
+                alert('You need to select some quantities first before enabling this service.');
+                return;
+            }
+        }
+
+        // Toggle state
+        if (vasType === 'foldAndBag') {
+            this.productLoader.toggleFoldAndBag(!isActive);
+        } else if (vasType === 'neckTags') {
+            this.productLoader.toggleNeckTags(!isActive);
+        }
+
+        itemElement.classList.toggle('active');
+        this.events.emit('vas:changed', { vasType, enabled: !isActive });
+
+        // Update order summary to reflect VAS changes
+        this.renderOrderSummary();
+
+        // Also update the VAS panel (Services tab)
+        this.renderVASPanel();
+    }
+
+    /**
      * Render order summary with pricing (shows all colors with their sizes)
      */
     renderOrderSummary() {
@@ -355,7 +475,8 @@ export class Designer {
         // Get full order details across all colors
         const orderLines = this.productLoader.getFullOrderDetails();
         const selectedVAS = this.productLoader.getSelectedVAS();
-        const vas = this.productLoader.getVAS();
+        const vas = this.currentProduct.vas || {};
+        const pricing = this.productLoader.getPricing(); // Global pricing rules
 
         let lines = [];
         let subtotal = 0;
@@ -400,9 +521,22 @@ export class Designer {
             });
         }
 
-        // Add VAS if selected
+        // Add view pricing (additional views)
+        const viewsPricing = this.calculateViewsPricing();
+        if (viewsPricing.total > 0) {
+            subtotal += viewsPricing.total;
+            lines.push(`
+                <div class="order-summary-line vas-line">
+                    <span>Print Locations (${viewsPricing.count} extra)</span>
+                    <span>$${viewsPricing.total.toFixed(2)}</span>
+                </div>
+            `);
+        }
+
+        // Add VAS if selected (using GLOBAL pricing)
         if (selectedVAS.foldAndBag && vas?.foldAndBag?.enabled && totalQty > 0) {
-            const vasTotal = totalQty * vas.foldAndBag.price;
+            const vasPrice = pricing.foldAndBag || 0;
+            const vasTotal = totalQty * vasPrice;
             subtotal += vasTotal;
             lines.push(`
                 <div class="order-summary-line vas-line">
@@ -413,7 +547,8 @@ export class Designer {
         }
 
         if (selectedVAS.neckTags && vas?.neckTags?.enabled && totalQty > 0) {
-            const vasTotal = totalQty * vas.neckTags.price;
+            const vasPrice = pricing.neckTags || 0;
+            const vasTotal = totalQty * vasPrice;
             subtotal += vasTotal;
             lines.push(`
                 <div class="order-summary-line vas-line">
@@ -439,6 +574,48 @@ export class Designer {
         if (rightPriceEl) {
             rightPriceEl.textContent = `$${subtotal.toFixed(2)}`;
         }
+    }
+
+    /**
+     * Calculate pricing for additional views/print locations
+     * First view = free, additional views = additionalView price
+     * Views marked "always charge" = charge their extraPrice
+     */
+    calculateViewsPricing() {
+        if (!this.currentProduct || !this.modules.stages) {
+            return { count: 0, total: 0 };
+        }
+
+        const pricing = this.productLoader.getPricing();
+        const additionalViewPrice = pricing.additionalView || 0;
+
+        // Get views that have design content
+        const designedViews = this.modules.stages.getDesignedStages?.() || [];
+        const views = this.currentProduct.views || [];
+
+        let total = 0;
+        let additionalCount = 0;
+        let isFirstView = true;
+
+        designedViews.forEach(stageId => {
+            const view = views.find(v => v.id === stageId);
+            if (!view) return;
+
+            // Views marked "always charge extra" - charge regardless
+            if (view.alwaysChargeExtra) {
+                total += view.extraPrice || 0;
+            } else {
+                // First regular view is free, additional views cost additionalViewPrice
+                if (isFirstView) {
+                    isFirstView = false;
+                } else {
+                    total += additionalViewPrice;
+                    additionalCount++;
+                }
+            }
+        });
+
+        return { count: additionalCount, total };
     }
 
     /**
@@ -514,7 +691,7 @@ export class Designer {
     }
 
     /**
-     * Render VAS panel for current product
+     * Render VAS panel for current product (Services tab)
      */
     renderVASPanel() {
         const container = document.getElementById('vas-services-list');
@@ -522,6 +699,7 @@ export class Designer {
 
         const vas = this.productLoader.getVAS();
         const selectedVAS = this.productLoader.getSelectedVAS();
+        const pricing = this.productLoader.getPricing(); // Global pricing
 
         // Get ALL sizes that have quantity > 0 across ALL colors (for neck tags)
         const allSelectedSizes = this.getAllSelectedSizes();
@@ -537,6 +715,7 @@ export class Designer {
         // Fold & Bag
         if (vas.foldAndBag && vas.foldAndBag.enabled) {
             const isActive = selectedVAS.foldAndBag;
+            const pricePerItem = pricing.foldAndBag || 0;
             html += `
                 <div class="vas-service-item ${isActive ? 'active' : ''}" data-service="foldAndBag">
                     <div class="vas-service-header">
@@ -544,7 +723,7 @@ export class Designer {
                             <i class="fas fa-box-open"></i>
                             <span class="vas-service-name">Fold & Bag</span>
                         </div>
-                        <span class="vas-service-price">+$${vas.foldAndBag.price.toFixed(2)}</span>
+                        <span class="vas-service-price">+$${pricePerItem.toFixed(2)}/item</span>
                     </div>
                     <div class="vas-service-body">
                         <p class="vas-service-desc">${vas.foldAndBag.description || 'Individual poly bag packaging for each item.'}</p>
@@ -556,6 +735,7 @@ export class Designer {
         // Neck Tags
         if (vas.neckTags && vas.neckTags.enabled) {
             const isActive = selectedVAS.neckTags;
+            const pricePerItem = pricing.neckTags || 0;
 
             html += `
                 <div class="vas-service-item ${isActive ? 'active' : ''}" data-service="neckTags">
@@ -564,7 +744,7 @@ export class Designer {
                             <i class="fas fa-tag"></i>
                             <span class="vas-service-name">Neck Tags</span>
                         </div>
-                        <span class="vas-service-price">+$${vas.neckTags.price.toFixed(2)}/ea</span>
+                        <span class="vas-service-price">+$${pricePerItem.toFixed(2)}/item</span>
                     </div>
                     <div class="vas-service-body">
                         <p class="vas-service-desc">${vas.neckTags.description || 'Custom printed neck label for each item.'}</p>
@@ -708,8 +888,9 @@ export class Designer {
         // Render Order panel (sidebar)
         this.renderOrderColors(productData.colors);
         this.renderOrderSizes(productData.sizes);
+        this.renderOrderVAS();
 
-        // Render VAS panel
+        // Render VAS panel (Services tab)
         this.renderVASPanel();
 
         // Emit event to load views in StageManager

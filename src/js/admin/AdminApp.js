@@ -22,10 +22,10 @@ class AdminApp {
         // Product sizes data
         this.productSizes = [];
 
-        // Product Value Added Services data
+        // Product Value Added Services data (pricing is global, only enable/disable per product)
         this.productVAS = {
-            foldAndBag: { enabled: false, price: 0, description: '' },
-            neckTags: { enabled: false, price: 0, description: '' }
+            foldAndBag: { enabled: false, description: '' },
+            neckTags: { enabled: false, description: '' }
         };
 
         this.init();
@@ -231,6 +231,18 @@ class AdminApp {
             this.updateCurrentViewData();
         });
 
+        // View pricing inputs
+        document.getElementById('view-always-charge')?.addEventListener('change', (e) => {
+            const priceGroup = document.getElementById('view-extra-price-group');
+            if (priceGroup) {
+                priceGroup.style.display = e.target.checked ? 'block' : 'none';
+            }
+            this.updateCurrentViewData();
+        });
+        document.getElementById('view-extra-price')?.addEventListener('change', () => {
+            this.updateCurrentViewData();
+        });
+
         // Listen for print area changes from the editor
         this.printAreaEditor.onChange((data) => {
             this.updateCurrentViewData();
@@ -251,7 +263,9 @@ class AdminApp {
                 topPercent: 0,
                 printWidthInches: 8,
                 printHeightInches: 10
-            }
+            },
+            alwaysChargeExtra: false,
+            extraPrice: 0
         }];
         this.currentViewIndex = 0;
     }
@@ -285,7 +299,9 @@ class AdminApp {
                 topPercent: 0,
                 printWidthInches: 8,
                 printHeightInches: 10
-            }
+            },
+            alwaysChargeExtra: false,
+            extraPrice: 0
         };
         this.productViews.push(newView);
         this.renderViewsList();
@@ -340,6 +356,21 @@ class AdminApp {
         // Update print size inputs
         document.getElementById('print-area-width').value = view.printArea?.printWidthInches || 8;
         document.getElementById('print-area-height').value = view.printArea?.printHeightInches || 10;
+
+        // Update view pricing inputs
+        const alwaysChargeCheckbox = document.getElementById('view-always-charge');
+        const extraPriceInput = document.getElementById('view-extra-price');
+        const extraPriceGroup = document.getElementById('view-extra-price-group');
+
+        if (alwaysChargeCheckbox) {
+            alwaysChargeCheckbox.checked = view.alwaysChargeExtra || false;
+        }
+        if (extraPriceInput) {
+            extraPriceInput.value = view.extraPrice || 0;
+        }
+        if (extraPriceGroup) {
+            extraPriceGroup.style.display = view.alwaysChargeExtra ? 'block' : 'none';
+        }
     }
 
     /**
@@ -489,6 +520,12 @@ class AdminApp {
             parseFloat(document.getElementById('print-area-width')?.value) || 8;
         this.productViews[this.currentViewIndex].printArea.printHeightInches =
             parseFloat(document.getElementById('print-area-height')?.value) || 10;
+
+        // Update view pricing
+        this.productViews[this.currentViewIndex].alwaysChargeExtra =
+            document.getElementById('view-always-charge')?.checked || false;
+        this.productViews[this.currentViewIndex].extraPrice =
+            parseFloat(document.getElementById('view-extra-price')?.value) || 0;
     }
 
     /**
@@ -800,10 +837,7 @@ class AdminApp {
             this.updateVASCardState('vas-fold-bag', e.target.checked);
         });
 
-        // Fold & Bag inputs
-        document.getElementById('vas-fold-bag-price')?.addEventListener('change', (e) => {
-            this.productVAS.foldAndBag.price = parseFloat(e.target.value) || 0;
-        });
+        // Fold & Bag description
         document.getElementById('vas-fold-bag-desc')?.addEventListener('change', (e) => {
             this.productVAS.foldAndBag.description = e.target.value;
         });
@@ -815,10 +849,7 @@ class AdminApp {
             this.updateVASCardState('vas-neck-tags', e.target.checked);
         });
 
-        // Neck Tags inputs
-        document.getElementById('vas-neck-tags-price')?.addEventListener('change', (e) => {
-            this.productVAS.neckTags.price = parseFloat(e.target.value) || 0;
-        });
+        // Neck Tags description
         document.getElementById('vas-neck-tags-desc')?.addEventListener('change', (e) => {
             this.productVAS.neckTags.description = e.target.value;
         });
@@ -839,8 +870,8 @@ class AdminApp {
      */
     initializeVAS() {
         this.productVAS = {
-            foldAndBag: { enabled: false, price: 0, description: '' },
-            neckTags: { enabled: false, price: 0, description: '' }
+            foldAndBag: { enabled: false, description: '' },
+            neckTags: { enabled: false, description: '' }
         };
     }
 
@@ -854,8 +885,10 @@ class AdminApp {
             foldBagEnabled.checked = this.productVAS.foldAndBag.enabled;
             this.updateVASCardState('vas-fold-bag', this.productVAS.foldAndBag.enabled);
         }
-        document.getElementById('vas-fold-bag-price').value = this.productVAS.foldAndBag.price || 0;
-        document.getElementById('vas-fold-bag-desc').value = this.productVAS.foldAndBag.description || '';
+        const foldBagDesc = document.getElementById('vas-fold-bag-desc');
+        if (foldBagDesc) {
+            foldBagDesc.value = this.productVAS.foldAndBag.description || '';
+        }
 
         // Neck Tags
         const neckTagsEnabled = document.getElementById('vas-neck-tags-enabled');
@@ -863,8 +896,10 @@ class AdminApp {
             neckTagsEnabled.checked = this.productVAS.neckTags.enabled;
             this.updateVASCardState('vas-neck-tags', this.productVAS.neckTags.enabled);
         }
-        document.getElementById('vas-neck-tags-price').value = this.productVAS.neckTags.price || 0;
-        document.getElementById('vas-neck-tags-desc').value = this.productVAS.neckTags.description || '';
+        const neckTagsDesc = document.getElementById('vas-neck-tags-desc');
+        if (neckTagsDesc) {
+            neckTagsDesc.value = this.productVAS.neckTags.description || '';
+        }
     }
 
     // =========================================================================
@@ -947,7 +982,9 @@ class AdminApp {
                         topPercent: 0,
                         printWidthInches: 8,
                         printHeightInches: 10
-                    }
+                    },
+                    alwaysChargeExtra: v.alwaysChargeExtra || false,
+                    extraPrice: v.extraPrice || 0
                 }));
             } else {
                 this.initializeViews();
@@ -984,11 +1021,17 @@ class AdminApp {
                 this.initializeSizes();
             }
 
-            // Load VAS
+            // Load VAS (pricing is global now, only enable/disable per product)
             if (product.vas) {
                 this.productVAS = {
-                    foldAndBag: product.vas.foldAndBag || { enabled: false, price: 0, description: '' },
-                    neckTags: product.vas.neckTags || { enabled: false, price: 0, description: '' }
+                    foldAndBag: {
+                        enabled: product.vas.foldAndBag?.enabled || false,
+                        description: product.vas.foldAndBag?.description || ''
+                    },
+                    neckTags: {
+                        enabled: product.vas.neckTags?.enabled || false,
+                        description: product.vas.neckTags?.description || ''
+                    }
                 };
             } else {
                 this.initializeVAS();
@@ -1032,7 +1075,9 @@ class AdminApp {
             views: this.productViews.map(v => ({
                 id: v.id,
                 name: v.name,
-                printArea: v.printArea
+                printArea: v.printArea,
+                alwaysChargeExtra: v.alwaysChargeExtra || false,
+                extraPrice: v.extraPrice || 0
             })),
             colors: this.productColors.map(c => ({
                 id: c.id,
@@ -1252,10 +1297,9 @@ class AdminApp {
 
     loadPricing() {
         const pricing = this.store.getPricing();
-        document.getElementById('price-per-text').value = pricing.perText || 0;
-        document.getElementById('price-per-image').value = pricing.perImage || 0;
-        document.getElementById('price-per-view').value = pricing.perView || 0;
-        document.getElementById('price-full-coverage').value = pricing.fullCoverage || 0;
+        document.getElementById('price-additional-view').value = pricing.additionalView || 0;
+        document.getElementById('price-fold-bag').value = pricing.foldAndBag || 0;
+        document.getElementById('price-neck-tags').value = pricing.neckTags || 0;
     }
 
     // =========================================================================
@@ -1309,10 +1353,9 @@ class AdminApp {
 
     savePricingForm() {
         const pricing = {
-            perText: parseFloat(document.getElementById('price-per-text').value) || 0,
-            perImage: parseFloat(document.getElementById('price-per-image').value) || 0,
-            perView: parseFloat(document.getElementById('price-per-view').value) || 0,
-            fullCoverage: parseFloat(document.getElementById('price-full-coverage').value) || 0
+            additionalView: parseFloat(document.getElementById('price-additional-view').value) || 0,
+            foldAndBag: parseFloat(document.getElementById('price-fold-bag').value) || 0,
+            neckTags: parseFloat(document.getElementById('price-neck-tags').value) || 0
         };
         this.store.savePricing(pricing);
         alert('Pricing rules saved!');

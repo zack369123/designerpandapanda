@@ -36,11 +36,9 @@ export class DataStore {
         // Initialize default pricing
         if (!this.get('pricing') || this.get('pricing').length === 0) {
             this.set('pricing', {
-                perText: 0,
-                perImage: 0,
-                perClipart: 0,
-                perView: 0,
-                fullCoverage: 0
+                additionalView: 0,  // Price for 2nd, 3rd, etc. print locations
+                foldAndBag: 0,      // Per item
+                neckTags: 0         // Per item
             });
         }
     }

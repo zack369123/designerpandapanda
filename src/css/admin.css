@@ -1400,3 +1400,65 @@ body {
 .mb-2 {
     margin-bottom: 16px;
 }
+
+/* --------------------------------------------------------------------------
+   Checkbox Labels
+   -------------------------------------------------------------------------- */
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+    flex-shrink: 0;
+}
+
+.checkbox-label span {
+    line-height: 1.4;
+}
+
+/* --------------------------------------------------------------------------
+   View Pricing Section
+   -------------------------------------------------------------------------- */
+.view-pricing-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.view-pricing-section h5 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.view-pricing-section h5 i {
+    color: var(--primary-color);
+}
+
+.view-pricing-section .form-group {
+    margin-bottom: 12px;
+}
+
+.view-extra-price-group {
+    margin-left: 28px;
+    padding: 12px;
+    background: var(--bg-color);
+    border-radius: var(--radius-sm);
+}
+
+.view-extra-price-group input {
+    max-width: 120px;
+}

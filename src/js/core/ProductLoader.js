@@ -462,48 +462,69 @@ export class ProductLoader {
     }
 
     /**
-     * Get pricing rules
+     * Get global pricing rules
      */
     getPricing() {
         const data = localStorage.getItem(this.prefix + 'pricing');
         try {
             return data ? JSON.parse(data) : {
-                perText: 0,
-                perImage: 0,
-                perClipart: 0,
-                perView: 0,
-                fullCoverage: 0
+                additionalView: 0,  // Price for 2nd, 3rd, etc. print locations
+                foldAndBag: 0,      // Per item
+                neckTags: 0         // Per item
             };
         } catch (e) {
-            return { perText: 0, perImage: 0, perClipart: 0, perView: 0, fullCoverage: 0 };
+            return { additionalView: 0, foldAndBag: 0, neckTags: 0 };
         }
     }
 
     /**
      * Calculate price for current design
+     * Note: This is a simplified calculation. The full calculation is done in Designer.renderOrderSummary()
      */
-    calculatePrice(objects = []) {
+    calculatePrice(designedViewIds = []) {
         if (!this.currentProduct) return 0;
 
         const pricing = this.getPricing();
-        let total = this.currentProduct.price || 0;
+        const basePrice = this.currentProduct.price || 0;
 
-        objects.forEach(obj => {
-            if (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'textbox') {
-                total += pricing.perText || 0;
-            } else if (obj.type === 'image') {
-                if (obj.isClipart) {
-                    total += pricing.perClipart || 0;
+        // Calculate base price with quantities and size upcharges
+        let total = 0;
+        const orderLines = this.getFullOrderDetails();
+        orderLines.forEach(line => {
+            total += line.quantity * (basePrice + (line.upcharge || 0));
+        });
+
+        // Add view pricing
+        const views = this.currentProduct.views || [];
+        let isFirstView = true;
+
+        designedViewIds.forEach(viewId => {
+            const view = views.find(v => v.id === viewId);
+            if (!view) return;
+
+            // Views marked "always charge extra"
+            if (view.alwaysChargeExtra) {
+                total += view.extraPrice || 0;
+            } else {
+                // First regular view is free, additional views cost additionalViewPrice
+                if (isFirstView) {
+                    isFirstView = false;
                 } else {
-                    total += pricing.perImage || 0;
+                    total += pricing.additionalView || 0;
                 }
             }
         });
 
-        // Add per-view pricing if using multiple views
-        const viewsUsed = this.currentProduct.views?.filter(v => v.hasDesign).length || 1;
-        if (viewsUsed > 1) {
-            total += (viewsUsed - 1) * (pricing.perView || 0);
+        // Add VAS pricing
+        const totalQty = this.getTotalQuantity();
+        const vas = this.currentProduct.vas || {};
+
+        if (this.selectedVAS.foldAndBag && vas?.foldAndBag?.enabled) {
+            total += totalQty * (pricing.foldAndBag || 0);
+        }
+
+        if (this.selectedVAS.neckTags && vas?.neckTags?.enabled) {
+            total += totalQty * (pricing.neckTags || 0);
         }
 
         return total;
