@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Product Designer - Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Custom Product Designer</title>
 
     <!-- Fabric.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
@@ -200,6 +202,10 @@
         <div id="designer-main">
             <!-- Left Sidebar -->
             <aside id="left-sidebar">
+                <!-- Close button for mobile -->
+                <button class="sidebar-close" id="close-sidebar" aria-label="Close sidebar">
+                    <i class="fas fa-times"></i>
+                </button>
                 <nav class="sidebar-tabs">
                     <button class="tab-btn active" data-tab="templates" title="Templates">
                         <i class="fas fa-th-large"></i>
@@ -349,14 +355,12 @@
                         </div>
                     </div>
 
-                    <!-- Size Selector -->
-                    <div id="size-selector">
-                        <span class="size-label">Size:</span>
-                        <select id="size-dropdown">
-                            <option value="">Select Size</option>
-                            <!-- Sizes will be rendered dynamically -->
-                        </select>
-                        <span id="size-upcharge" class="upcharge-badge" style="display: none;">+$0.00</span>
+                    <!-- Size Quantities (Bulk Order) -->
+                    <div id="size-quantities">
+                        <span class="size-label">Quantities:</span>
+                        <div id="size-qty-grid">
+                            <!-- Sizes with quantity selectors will be rendered dynamically -->
+                        </div>
                     </div>
                 </div>
 
@@ -498,6 +502,40 @@
                 </div>
             </aside>
         </div>
+
+        <!-- Mobile Tool Panel (appears above bottom nav when editing) -->
+        <div id="mobile-tool-panel">
+            <!-- Tools will be populated based on selected object -->
+        </div>
+
+        <!-- Bottom Navigation Bar (Mobile Only) -->
+        <nav id="bottom-nav">
+            <div class="bottom-nav-items">
+                <button class="bottom-nav-item" data-tab="templates" title="Templates">
+                    <i class="fas fa-th-large"></i>
+                    <span>Templates</span>
+                </button>
+                <button class="bottom-nav-item" data-tab="text" title="Text">
+                    <i class="fas fa-font"></i>
+                    <span>Text</span>
+                </button>
+                <button class="bottom-nav-item" data-tab="uploads" title="Upload">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Upload</span>
+                </button>
+                <button class="bottom-nav-item" data-tab="layers" title="Layers">
+                    <i class="fas fa-layer-group"></i>
+                    <span>Layers</span>
+                </button>
+                <button class="bottom-nav-item" data-tab="services" title="Services">
+                    <i class="fas fa-concierge-bell"></i>
+                    <span>Services</span>
+                </button>
+            </div>
+            <button class="bottom-nav-action" id="mobile-cart-btn" title="Add to Cart">
+                <i class="fas fa-shopping-cart"></i>
+            </button>
+        </nav>
     </div>
 
     <!-- Hidden file input for image uploads -->

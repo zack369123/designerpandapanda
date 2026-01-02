@@ -21,10 +21,13 @@ export class SidebarManager {
      */
     init() {
         this.sidebar = document.getElementById('left-sidebar');
+        this.bottomNav = document.getElementById('bottom-nav');
         this.tabButtons = this.sidebar.querySelectorAll('.tab-btn');
         this.tabPanels = this.sidebar.querySelectorAll('.tab-panel');
+        this.bottomNavItems = this.bottomNav?.querySelectorAll('.bottom-nav-item');
 
         this.setupTabNavigation();
+        this.setupMobileNavigation();
         this.setupTextPanel();
         this.setupShapesPanel();
         this.setupUploadsPanel();
@@ -33,6 +36,15 @@ export class SidebarManager {
         // Listen for tab show events
         this.events.on('sidebar:showTab', (tabId) => {
             this.showTab(tabId);
+        });
+
+        // Listen for mobile panel events
+        document.addEventListener('mobile:panelOpened', (e) => {
+            this.syncTabState(e.detail.panel);
+        });
+
+        document.addEventListener('mobile:panelClosed', () => {
+            this.clearTabState();
         });
     }
 
@@ -45,6 +57,53 @@ export class SidebarManager {
                 const tabId = btn.dataset.tab;
                 this.showTab(tabId);
             });
+        });
+    }
+
+    /**
+     * Set up mobile bottom navigation
+     */
+    setupMobileNavigation() {
+        if (!this.bottomNavItems) return;
+
+        this.bottomNavItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const tabId = item.dataset.tab;
+                if (tabId) {
+                    this.showTab(tabId);
+                }
+            });
+        });
+    }
+
+    /**
+     * Sync tab state between desktop tabs and mobile nav
+     */
+    syncTabState(tabId) {
+        // Update desktop tab buttons
+        this.tabButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabId);
+        });
+
+        // Update mobile nav items
+        this.bottomNavItems?.forEach(item => {
+            item.classList.toggle('active', item.dataset.tab === tabId);
+        });
+
+        // Update panels
+        this.tabPanels.forEach(panel => {
+            panel.classList.toggle('active', panel.dataset.panel === tabId);
+        });
+
+        this.currentTab = tabId;
+    }
+
+    /**
+     * Clear tab active state (used when mobile panel closes)
+     */
+    clearTabState() {
+        this.bottomNavItems?.forEach(item => {
+            item.classList.remove('active');
         });
     }
 

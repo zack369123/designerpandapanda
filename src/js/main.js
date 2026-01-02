@@ -1,10 +1,12 @@
 /**
  * Custom Product Designer - Main Entry Point
  * Clean modular architecture inspired by Lumise UX
+ * Mobile-first responsive design
  */
 
 import { Designer } from './core/Designer.js';
 import { EventBus } from './core/EventBus.js';
+import { MobileManager } from './modules/MobileManager.js';
 import { units } from './utils/Units.js';
 
 // Initialize when DOM is ready
@@ -33,9 +35,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make designer accessible globally for debugging
     window.designer = designer;
 
+    // Initialize mobile manager for responsive behavior
+    const mobileManager = new MobileManager(designer);
+    window.mobileManager = mobileManager;
+
     // Log canvas size in inches
     const widthInches = units.pxToInches(600).toFixed(2);
     const heightInches = units.pxToInches(600).toFixed(2);
     console.log(`Custom Product Designer initialized`);
     console.log(`Canvas size: ${widthInches}" x ${heightInches}" at ${units.getDPI()} DPI`);
+    console.log(`Device: ${mobileManager.currentBreakpoint}`);
 });

@@ -60,8 +60,8 @@ export class Designer {
         // Set up color selector
         this.setupColorSelector();
 
-        // Set up size selector
-        this.setupSizeSelector();
+        // Set up size quantities (bulk order)
+        this.setupSizeQuantities();
 
         // Set up VAS panel
         this.setupVASPanel();
@@ -203,80 +203,103 @@ export class Designer {
     }
 
     /**
-     * Set up size selector
+     * Set up size quantities (bulk order)
      */
-    setupSizeSelector() {
-        const sizeDropdown = document.getElementById('size-dropdown');
-        if (!sizeDropdown) return;
+    setupSizeQuantities() {
+        const qtyGrid = document.getElementById('size-qty-grid');
+        if (!qtyGrid) return;
 
-        sizeDropdown.addEventListener('change', (e) => {
-            const sizeId = e.target.value;
-            this.switchSize(sizeId);
+        // Event delegation for quantity buttons
+        qtyGrid.addEventListener('click', (e) => {
+            const btn = e.target.closest('.size-qty-btn');
+            if (!btn) return;
+
+            const sizeId = btn.dataset.sizeId;
+            const action = btn.dataset.action;
+
+            if (sizeId && action) {
+                this.updateSizeQuantity(sizeId, action);
+            }
         });
     }
 
     /**
-     * Render size dropdown for current product
+     * Render size quantities grid for current product
      */
-    renderSizeDropdown(sizes) {
-        const dropdown = document.getElementById('size-dropdown');
-        const sizeSelector = document.getElementById('size-selector');
+    renderSizeQuantities(sizes) {
+        const grid = document.getElementById('size-qty-grid');
+        const container = document.getElementById('size-quantities');
 
-        if (!dropdown) return;
+        if (!grid) return;
 
-        // Hide selector if no sizes
+        // Hide if no sizes
         if (!sizes || sizes.length === 0) {
-            if (sizeSelector) sizeSelector.style.display = 'none';
+            if (container) container.style.display = 'none';
             return;
         }
 
-        // Show the selector
-        if (sizeSelector) sizeSelector.style.display = 'flex';
+        // Show the container
+        if (container) container.style.display = 'flex';
 
-        // Render options
-        dropdown.innerHTML = '<option value="">Select Size</option>' +
-            sizes.map(size => {
-                const upchargeText = size.upcharge > 0 ? ` (+$${size.upcharge.toFixed(2)})` : '';
-                return `<option value="${size.id}" ${size.isActive ? 'selected' : ''}>${size.name}${upchargeText}</option>`;
-            }).join('');
+        const quantities = this.productLoader.getSizeQuantities();
 
-        // Update upcharge badge
-        this.updateSizeUpchargeBadge();
+        grid.innerHTML = sizes.map(size => {
+            const qty = quantities[size.id] || 0;
+            const hasQty = qty > 0;
+            const upchargeText = size.upcharge > 0 ? `<span class="size-qty-upcharge">+$${size.upcharge.toFixed(2)}</span>` : '';
+
+            return `
+                <div class="size-qty-item ${hasQty ? 'has-qty' : ''}" data-size-id="${size.id}">
+                    <span class="size-qty-name">${size.name}</span>
+                    ${upchargeText}
+                    <div class="size-qty-controls">
+                        <button class="size-qty-btn" data-size-id="${size.id}" data-action="decrease" ${qty === 0 ? 'disabled' : ''}>
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <span class="size-qty-value">${qty}</span>
+                        <button class="size-qty-btn" data-size-id="${size.id}" data-action="increase">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     /**
-     * Update size upcharge badge visibility
+     * Update quantity for a size
      */
-    updateSizeUpchargeBadge() {
-        const badge = document.getElementById('size-upcharge');
-        const currentSize = this.productLoader.getCurrentSize();
+    updateSizeQuantity(sizeId, action) {
+        const quantities = this.productLoader.getSizeQuantities();
+        let currentQty = quantities[sizeId] || 0;
 
-        if (!badge) return;
-
-        if (currentSize && currentSize.upcharge > 0) {
-            badge.textContent = `+$${currentSize.upcharge.toFixed(2)}`;
-            badge.style.display = 'inline';
-        } else {
-            badge.style.display = 'none';
+        if (action === 'increase') {
+            currentQty++;
+        } else if (action === 'decrease' && currentQty > 0) {
+            currentQty--;
         }
-    }
 
-    /**
-     * Switch to a different size
-     */
-    switchSize(sizeId) {
-        this.productLoader.switchSizeById(sizeId);
+        this.productLoader.setSizeQuantity(sizeId, currentQty);
 
-        // Update UI
-        this.updateSizeUpchargeBadge();
+        // Re-render the grid
+        const sizes = this.productLoader.getSizes();
+        this.renderSizeQuantities(sizes);
 
-        // Emit event
-        this.events.emit('size:changed', { sizeId });
-
-        // Re-render VAS panel (neck tags depend on size)
+        // Re-render VAS panel (neck tags depend on selected sizes)
         this.renderVASPanel();
 
-        console.log(`Switched to size: ${sizeId}`);
+        // Emit event
+        this.events.emit('size:quantityChanged', { sizeId, quantity: currentQty });
+    }
+
+    /**
+     * Get sizes that have quantity > 0
+     */
+    getSelectedSizes() {
+        const sizes = this.productLoader.getSizes();
+        const quantities = this.productLoader.getSizeQuantities();
+
+        return sizes.filter(size => (quantities[size.id] || 0) > 0);
     }
 
     /**
@@ -316,8 +339,11 @@ export class Designer {
         if (!container) return;
 
         const vas = this.productLoader.getVAS();
-        const sizes = this.productLoader.getSizes();
         const selectedVAS = this.productLoader.getSelectedVAS();
+
+        // Get sizes that have quantity > 0
+        const selectedSizes = this.getSelectedSizes();
+        const hasSelectedSizes = selectedSizes.length > 0;
 
         if (!vas) {
             container.innerHTML = '<div class="vas-loading"><p>Select a product to see available services</p></div>';
@@ -348,7 +374,6 @@ export class Designer {
         // Neck Tags
         if (vas.neckTags && vas.neckTags.enabled) {
             const isActive = selectedVAS.neckTags;
-            const canEnable = sizes && sizes.length > 0;
 
             html += `
                 <div class="vas-service-item ${isActive ? 'active' : ''}" data-service="neckTags">
@@ -361,7 +386,7 @@ export class Designer {
                     </div>
                     <div class="vas-service-body">
                         <p class="vas-service-desc">${vas.neckTags.description || 'Custom printed neck label for each item.'}</p>
-                        ${canEnable ? this.renderNeckTagsSizes(sizes, selectedVAS.neckTagImages) : `
+                        ${hasSelectedSizes ? this.renderNeckTagsSizes(selectedSizes, selectedVAS.neckTagImages) : `
                             <div class="vas-no-sizes-warning">
                                 <i class="fas fa-exclamation-triangle"></i>
                                 <p>You need to pick some sizes first before using this function.</p>
@@ -408,10 +433,13 @@ export class Designer {
     toggleVASService(serviceType, itemElement) {
         const isActive = itemElement.classList.contains('active');
 
-        // For neck tags, check if sizes are available
-        if (serviceType === 'neckTags' && !isActive && !this.productLoader.canEnableNeckTags()) {
-            alert('You need to pick some sizes first before using this function.');
-            return;
+        // For neck tags, check if any sizes have quantity > 0
+        if (serviceType === 'neckTags' && !isActive) {
+            const selectedSizes = this.getSelectedSizes();
+            if (selectedSizes.length === 0) {
+                alert('You need to pick some sizes first before using this function.');
+                return;
+            }
         }
 
         // Toggle state
@@ -492,8 +520,8 @@ export class Designer {
         // Render color swatches
         this.renderColorSwatches(productData.colors);
 
-        // Render size dropdown
-        this.renderSizeDropdown(productData.sizes);
+        // Render size quantities (bulk order)
+        this.renderSizeQuantities(productData.sizes);
 
         // Render VAS panel
         this.renderVASPanel();
@@ -610,6 +638,74 @@ export class Designer {
 
         // Set up export dropdown
         this.setupExportDropdown();
+
+        // Handle window resize for responsive canvas
+        this.setupResponsiveCanvas();
+
+        // Listen for mobile events
+        document.addEventListener('mobile:resize', (e) => {
+            this.handleMobileResize(e.detail);
+        });
+    }
+
+    /**
+     * Set up responsive canvas handling
+     */
+    setupResponsiveCanvas() {
+        let resizeTimeout;
+
+        const handleResize = () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.fitCanvasToContainer();
+            }, 150);
+        };
+
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(handleResize, 300);
+        });
+
+        // Initial fit
+        setTimeout(() => this.fitCanvasToContainer(), 100);
+    }
+
+    /**
+     * Fit canvas to its container
+     */
+    fitCanvasToContainer() {
+        const container = document.getElementById('canvas-container');
+        const wrapper = document.getElementById('canvas-wrapper');
+        if (!container || !wrapper || !this.canvas) return;
+
+        const isMobile = window.innerWidth < 768;
+        const padding = isMobile ? 16 : 32;
+        const bottomNavHeight = isMobile ? 56 : 0;
+
+        const containerWidth = container.clientWidth - (padding * 2);
+        const containerHeight = container.clientHeight - (padding * 2) - bottomNavHeight;
+
+        const canvasWidth = this.canvas.getWidth();
+        const canvasHeight = this.canvas.getHeight();
+
+        // Calculate scale to fit
+        const scaleX = containerWidth / canvasWidth;
+        const scaleY = containerHeight / canvasHeight;
+        const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+
+        if (scale < 1) {
+            wrapper.style.transform = `scale(${scale})`;
+            wrapper.style.transformOrigin = 'center center';
+        } else {
+            wrapper.style.transform = '';
+        }
+    }
+
+    /**
+     * Handle mobile resize events from MobileManager
+     */
+    handleMobileResize(detail) {
+        this.fitCanvasToContainer();
     }
 
     /**

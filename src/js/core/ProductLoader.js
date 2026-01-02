@@ -11,7 +11,7 @@ export class ProductLoader {
         this.currentProduct = null;
         this.currentViewIndex = 0;
         this.currentColorIndex = 0;
-        this.currentSizeIndex = -1; // -1 means no size selected
+        this.sizeQuantities = {}; // { sizeId: quantity }
         this.selectedVAS = {
             foldAndBag: false,
             neckTags: false,
@@ -54,7 +54,7 @@ export class ProductLoader {
         this.currentProduct = product;
         this.currentViewIndex = 0;
         this.currentColorIndex = 0;
-        this.currentSizeIndex = -1;
+        this.sizeQuantities = {}; // Reset quantities for new product
         this.selectedVAS = {
             foldAndBag: false,
             neckTags: false,
@@ -86,11 +86,11 @@ export class ProductLoader {
         }));
 
         // Process sizes for UI display
-        const sizes = (product.sizes || []).map((size, index) => ({
+        const sizes = (product.sizes || []).map((size) => ({
             id: size.id,
             name: size.name,
             upcharge: size.upcharge || 0,
-            isActive: index === this.currentSizeIndex
+            quantity: this.sizeQuantities[size.id] || 0
         }));
 
         // Get VAS configuration
@@ -110,7 +110,7 @@ export class ProductLoader {
             vas: vas,
             currentViewIndex: this.currentViewIndex,
             currentColorIndex: this.currentColorIndex,
-            currentSizeIndex: this.currentSizeIndex,
+            sizeQuantities: { ...this.sizeQuantities },
             selectedVAS: { ...this.selectedVAS }
         };
     }
@@ -215,7 +215,7 @@ export class ProductLoader {
     }
 
     // =========================================================================
-    // Size Management
+    // Size Quantities Management (Bulk Order)
     // =========================================================================
 
     /**
@@ -223,41 +223,52 @@ export class ProductLoader {
      */
     getSizes() {
         if (!this.currentProduct || !this.currentProduct.sizes) return [];
-        return this.currentProduct.sizes.map((size, index) => ({
+        return this.currentProduct.sizes.map((size) => ({
             id: size.id,
             name: size.name,
             upcharge: size.upcharge || 0,
-            isActive: index === this.currentSizeIndex
+            quantity: this.sizeQuantities[size.id] || 0
         }));
     }
 
     /**
-     * Get current size
+     * Get all size quantities
      */
-    getCurrentSize() {
-        if (!this.currentProduct || !this.currentProduct.sizes || this.currentSizeIndex < 0) return null;
-        return this.currentProduct.sizes[this.currentSizeIndex] || null;
+    getSizeQuantities() {
+        return { ...this.sizeQuantities };
     }
 
     /**
-     * Switch to a different size
+     * Set quantity for a specific size
      */
-    switchSize(index) {
-        if (!this.currentProduct || !this.currentProduct.sizes) return null;
-        if (index < -1 || index >= this.currentProduct.sizes.length) return null;
-
-        this.currentSizeIndex = index;
-        return this.getCurrentSize();
+    setSizeQuantity(sizeId, quantity) {
+        if (quantity <= 0) {
+            delete this.sizeQuantities[sizeId];
+        } else {
+            this.sizeQuantities[sizeId] = quantity;
+        }
     }
 
     /**
-     * Switch size by size ID
+     * Get total quantity across all sizes
      */
-    switchSizeById(sizeId) {
-        if (!this.currentProduct || !this.currentProduct.sizes) return null;
-        const index = this.currentProduct.sizes.findIndex(s => s.id === sizeId);
-        this.currentSizeIndex = index;
-        return this.getCurrentSize();
+    getTotalQuantity() {
+        return Object.values(this.sizeQuantities).reduce((sum, qty) => sum + qty, 0);
+    }
+
+    /**
+     * Get sizes that have quantity > 0
+     */
+    getSelectedSizes() {
+        if (!this.currentProduct || !this.currentProduct.sizes) return [];
+        return this.currentProduct.sizes
+            .filter(size => (this.sizeQuantities[size.id] || 0) > 0)
+            .map(size => ({
+                id: size.id,
+                name: size.name,
+                upcharge: size.upcharge || 0,
+                quantity: this.sizeQuantities[size.id]
+            }));
     }
 
     // =========================================================================
@@ -304,10 +315,10 @@ export class ProductLoader {
     }
 
     /**
-     * Check if neck tags can be enabled (requires sizes)
+     * Check if neck tags can be enabled (requires sizes with quantity > 0)
      */
     canEnableNeckTags() {
-        return this.currentProduct?.sizes?.length > 0;
+        return this.getSelectedSizes().length > 0;
     }
 
     /**
