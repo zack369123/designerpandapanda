@@ -835,6 +835,122 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   Value Added Services (VAS) Panel
+   -------------------------------------------------------------------------- */
+.vas-services-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.vas-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.vas-loading p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.vas-service-item {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all var(--transition-fast);
+}
+
+.vas-service-item.active {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+.vas-service-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    cursor: pointer;
+    background: var(--surface-color);
+    transition: background var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.vas-service-header:hover {
+    background: var(--bg-color);
+}
+
+.vas-service-header:active {
+    background: var(--bg-color);
+}
+
+.vas-service-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.vas-service-info input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.vas-service-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.vas-service-price {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-color);
+    white-space: nowrap;
+}
+
+.vas-service-body {
+    display: none;
+    padding: 0 var(--spacing-md) var(--spacing-md);
+    background: var(--surface-color);
+    border-top: 1px solid var(--border-color);
+}
+
+.vas-service-item.active .vas-service-body {
+    display: block;
+}
+
+.vas-service-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.vas-no-sizes-warning {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: var(--radius-sm);
+    color: #856404;
+    font-size: 12px;
+}
+
+.vas-no-sizes-warning i {
+    color: #ffc107;
+}
+
+/* --------------------------------------------------------------------------
    Canvas Area - Mobile First
    -------------------------------------------------------------------------- */
 #canvas-area {
@@ -1216,7 +1332,33 @@ body {
 }
 
 .order-summary-line.size-line {
-    padding-left: var(--spacing-sm);
+    padding-left: var(--spacing-lg);
+}
+
+.order-summary-line.color-header {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: var(--spacing-sm);
+}
+
+.order-summary-line.color-header:first-child {
+    margin-top: 0;
+}
+
+.order-summary-line.vas-line {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px dashed var(--border-color);
+}
+
+.color-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: var(--spacing-xs);
+    vertical-align: middle;
+    border: 1px solid var(--border-color);
 }
 
 .order-summary-total {
@@ -1793,9 +1935,9 @@ body {
         top: 0;
         width: 300px;
         height: 100%;
-        background: var(--dark-surface);
+        background: var(--surface-color);
         display: none;
-        border-right: 1px solid var(--dark-border);
+        border-right: 1px solid var(--border-color);
     }
 
     #left-sidebar.panel-open .sidebar-content {

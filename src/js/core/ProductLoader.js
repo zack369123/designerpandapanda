@@ -11,11 +11,11 @@ export class ProductLoader {
         this.currentProduct = null;
         this.currentViewIndex = 0;
         this.currentColorIndex = 0;
-        this.sizeQuantities = {}; // { sizeId: quantity }
+        this.colorSizeQuantities = {}; // { colorId: { sizeId: quantity } }
         this.selectedVAS = {
             foldAndBag: false,
             neckTags: false,
-            neckTagImages: {} // { sizeId: imageDataUrl }
+            neckTagImages: {} // { colorId_sizeId: imageDataUrl }
         };
     }
 
@@ -54,7 +54,7 @@ export class ProductLoader {
         this.currentProduct = product;
         this.currentViewIndex = 0;
         this.currentColorIndex = 0;
-        this.sizeQuantities = {}; // Reset quantities for new product
+        this.colorSizeQuantities = {}; // Reset quantities for new product
         this.selectedVAS = {
             foldAndBag: false,
             neckTags: false,
@@ -85,12 +85,14 @@ export class ProductLoader {
             isActive: index === this.currentColorIndex
         }));
 
-        // Process sizes for UI display
+        // Process sizes for UI display (quantities for current color)
+        const currentColorId = currentColor?.id;
+        const currentColorQtys = currentColorId ? (this.colorSizeQuantities[currentColorId] || {}) : {};
         const sizes = (product.sizes || []).map((size) => ({
             id: size.id,
             name: size.name,
             upcharge: size.upcharge || 0,
-            quantity: this.sizeQuantities[size.id] || 0
+            quantity: currentColorQtys[size.id] || 0
         }));
 
         // Get VAS configuration
@@ -110,7 +112,7 @@ export class ProductLoader {
             vas: vas,
             currentViewIndex: this.currentViewIndex,
             currentColorIndex: this.currentColorIndex,
-            sizeQuantities: { ...this.sizeQuantities },
+            colorSizeQuantities: JSON.parse(JSON.stringify(this.colorSizeQuantities)),
             selectedVAS: { ...this.selectedVAS }
         };
     }
@@ -215,60 +217,141 @@ export class ProductLoader {
     }
 
     // =========================================================================
-    // Size Quantities Management (Bulk Order)
+    // Size Quantities Management (Per-Color Bulk Order)
     // =========================================================================
 
     /**
-     * Get all sizes for current product
+     * Get all sizes for current product (with quantities for current color)
      */
     getSizes() {
         if (!this.currentProduct || !this.currentProduct.sizes) return [];
+        const currentColor = this.getCurrentColor();
+        const colorId = currentColor?.id;
+        const colorQtys = colorId ? (this.colorSizeQuantities[colorId] || {}) : {};
+
         return this.currentProduct.sizes.map((size) => ({
             id: size.id,
             name: size.name,
             upcharge: size.upcharge || 0,
-            quantity: this.sizeQuantities[size.id] || 0
+            quantity: colorQtys[size.id] || 0
         }));
     }
 
     /**
-     * Get all size quantities
+     * Get size quantities for current color
      */
     getSizeQuantities() {
-        return { ...this.sizeQuantities };
+        const currentColor = this.getCurrentColor();
+        const colorId = currentColor?.id;
+        return colorId ? { ...(this.colorSizeQuantities[colorId] || {}) } : {};
     }
 
     /**
-     * Set quantity for a specific size
+     * Get all color/size quantities (full order)
+     */
+    getAllColorSizeQuantities() {
+        return JSON.parse(JSON.stringify(this.colorSizeQuantities));
+    }
+
+    /**
+     * Set quantity for a specific size (for current color)
      */
     setSizeQuantity(sizeId, quantity) {
+        const currentColor = this.getCurrentColor();
+        const colorId = currentColor?.id;
+        if (!colorId) return;
+
+        if (!this.colorSizeQuantities[colorId]) {
+            this.colorSizeQuantities[colorId] = {};
+        }
+
         if (quantity <= 0) {
-            delete this.sizeQuantities[sizeId];
+            delete this.colorSizeQuantities[colorId][sizeId];
+            // Clean up empty color entries
+            if (Object.keys(this.colorSizeQuantities[colorId]).length === 0) {
+                delete this.colorSizeQuantities[colorId];
+            }
         } else {
-            this.sizeQuantities[sizeId] = quantity;
+            this.colorSizeQuantities[colorId][sizeId] = quantity;
         }
     }
 
     /**
-     * Get total quantity across all sizes
+     * Get total quantity for current color
      */
-    getTotalQuantity() {
-        return Object.values(this.sizeQuantities).reduce((sum, qty) => sum + qty, 0);
+    getTotalQuantityForCurrentColor() {
+        const currentColor = this.getCurrentColor();
+        const colorId = currentColor?.id;
+        if (!colorId || !this.colorSizeQuantities[colorId]) return 0;
+        return Object.values(this.colorSizeQuantities[colorId]).reduce((sum, qty) => sum + qty, 0);
     }
 
     /**
-     * Get sizes that have quantity > 0
+     * Get total quantity across ALL colors
+     */
+    getTotalQuantity() {
+        let total = 0;
+        for (const colorId in this.colorSizeQuantities) {
+            for (const sizeId in this.colorSizeQuantities[colorId]) {
+                total += this.colorSizeQuantities[colorId][sizeId];
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Get sizes that have quantity > 0 (for current color)
      */
     getSelectedSizes() {
         if (!this.currentProduct || !this.currentProduct.sizes) return [];
+        const currentColor = this.getCurrentColor();
+        const colorId = currentColor?.id;
+        const colorQtys = colorId ? (this.colorSizeQuantities[colorId] || {}) : {};
+
         return this.currentProduct.sizes
-            .filter(size => (this.sizeQuantities[size.id] || 0) > 0)
+            .filter(size => (colorQtys[size.id] || 0) > 0)
             .map(size => ({
                 id: size.id,
                 name: size.name,
                 upcharge: size.upcharge || 0,
-                quantity: this.sizeQuantities[size.id]
+                quantity: colorQtys[size.id]
             }));
+    }
+
+    /**
+     * Get full order details (all colors with their sizes and quantities)
+     */
+    getFullOrderDetails() {
+        if (!this.currentProduct) return [];
+
+        const colors = this.currentProduct.colors || [];
+        const sizes = this.currentProduct.sizes || [];
+        const orderLines = [];
+
+        for (const colorId in this.colorSizeQuantities) {
+            const color = colors.find(c => c.id === colorId);
+            if (!color) continue;
+
+            for (const sizeId in this.colorSizeQuantities[colorId]) {
+                const qty = this.colorSizeQuantities[colorId][sizeId];
+                if (qty <= 0) continue;
+
+                const size = sizes.find(s => s.id === sizeId);
+                if (!size) continue;
+
+                orderLines.push({
+                    colorId: color.id,
+                    colorName: color.name,
+                    colorCode: color.colorCode,
+                    sizeId: size.id,
+                    sizeName: size.name,
+                    upcharge: size.upcharge || 0,
+                    quantity: qty
+                });
+            }
+        }
+
+        return orderLines;
     }
 
     // =========================================================================
@@ -315,10 +398,35 @@ export class ProductLoader {
     }
 
     /**
-     * Check if neck tags can be enabled (requires sizes with quantity > 0)
+     * Check if neck tags can be enabled (requires any size with quantity > 0 across all colors)
      */
     canEnableNeckTags() {
-        return this.getSelectedSizes().length > 0;
+        return this.getTotalQuantity() > 0;
+    }
+
+    /**
+     * Get all unique sizes that have quantities across all colors (for neck tags)
+     */
+    getAllSelectedSizes() {
+        if (!this.currentProduct || !this.currentProduct.sizes) return [];
+
+        const sizesWithQty = new Set();
+
+        for (const colorId in this.colorSizeQuantities) {
+            for (const sizeId in this.colorSizeQuantities[colorId]) {
+                if (this.colorSizeQuantities[colorId][sizeId] > 0) {
+                    sizesWithQty.add(sizeId);
+                }
+            }
+        }
+
+        return this.currentProduct.sizes
+            .filter(size => sizesWithQty.has(size.id))
+            .map(size => ({
+                id: size.id,
+                name: size.name,
+                upcharge: size.upcharge || 0
+            }));
     }
 
     /**

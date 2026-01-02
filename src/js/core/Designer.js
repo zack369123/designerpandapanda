@@ -193,6 +193,10 @@ export class Designer {
         // Update Order panel colors
         this.renderOrderColors(colors);
 
+        // Update Order panel sizes (quantities are per-color)
+        const sizes = this.productLoader.getSizes();
+        this.renderOrderSizes(sizes);
+
         // Reload the current view with new color's image
         this.events.emit('color:changed', { colorId, view });
 
@@ -339,7 +343,7 @@ export class Designer {
     }
 
     /**
-     * Render order summary with pricing
+     * Render order summary with pricing (shows all colors with their sizes)
      */
     renderOrderSummary() {
         const linesContainer = document.getElementById('order-summary-lines');
@@ -348,8 +352,8 @@ export class Designer {
 
         if (!linesContainer || !this.currentProduct) return;
 
-        const sizes = this.productLoader.getSizes();
-        const quantities = this.productLoader.getSizeQuantities();
+        // Get full order details across all colors
+        const orderLines = this.productLoader.getFullOrderDetails();
         const selectedVAS = this.productLoader.getSelectedVAS();
         const vas = this.productLoader.getVAS();
 
@@ -357,42 +361,62 @@ export class Designer {
         let subtotal = 0;
         let totalQty = 0;
 
-        // Calculate per-size totals
-        sizes.forEach(size => {
-            const qty = quantities[size.id] || 0;
-            if (qty > 0) {
-                totalQty += qty;
+        // Group by color for display
+        const colorGroups = {};
+        orderLines.forEach(line => {
+            if (!colorGroups[line.colorId]) {
+                colorGroups[line.colorId] = {
+                    colorName: line.colorName,
+                    colorCode: line.colorCode,
+                    items: []
+                };
+            }
+            colorGroups[line.colorId].items.push(line);
+        });
+
+        // Calculate per-color/size totals
+        for (const colorId in colorGroups) {
+            const group = colorGroups[colorId];
+
+            // Add color header
+            lines.push(`
+                <div class="order-summary-line color-header">
+                    <span><span class="color-dot" style="background:${group.colorCode}"></span>${group.colorName}</span>
+                </div>
+            `);
+
+            group.items.forEach(item => {
+                totalQty += item.quantity;
                 const basePrice = this.currentProduct.price || 0;
-                const upcharge = size.upcharge || 0;
-                const lineTotal = qty * (basePrice + upcharge);
+                const lineTotal = item.quantity * (basePrice + item.upcharge);
                 subtotal += lineTotal;
 
                 lines.push(`
                     <div class="order-summary-line size-line">
-                        <span>${size.name} × ${qty}</span>
+                        <span>${item.sizeName} × ${item.quantity}</span>
                         <span>$${lineTotal.toFixed(2)}</span>
                     </div>
                 `);
-            }
-        });
+            });
+        }
 
         // Add VAS if selected
-        if (selectedVAS.foldAndBag && vas?.foldAndBag?.enabled) {
+        if (selectedVAS.foldAndBag && vas?.foldAndBag?.enabled && totalQty > 0) {
             const vasTotal = totalQty * vas.foldAndBag.price;
             subtotal += vasTotal;
             lines.push(`
-                <div class="order-summary-line">
+                <div class="order-summary-line vas-line">
                     <span>Fold & Bag × ${totalQty}</span>
                     <span>$${vasTotal.toFixed(2)}</span>
                 </div>
             `);
         }
 
-        if (selectedVAS.neckTags && vas?.neckTags?.enabled) {
+        if (selectedVAS.neckTags && vas?.neckTags?.enabled && totalQty > 0) {
             const vasTotal = totalQty * vas.neckTags.price;
             subtotal += vasTotal;
             lines.push(`
-                <div class="order-summary-line">
+                <div class="order-summary-line vas-line">
                     <span>Neck Tags × ${totalQty}</span>
                     <span>$${vasTotal.toFixed(2)}</span>
                 </div>
@@ -444,13 +468,20 @@ export class Designer {
     }
 
     /**
-     * Get sizes that have quantity > 0
+     * Get sizes that have quantity > 0 (for current color)
      */
     getSelectedSizes() {
         const sizes = this.productLoader.getSizes();
         const quantities = this.productLoader.getSizeQuantities();
 
         return sizes.filter(size => (quantities[size.id] || 0) > 0);
+    }
+
+    /**
+     * Get all sizes that have quantity > 0 across ALL colors (for neck tags)
+     */
+    getAllSelectedSizes() {
+        return this.productLoader.getAllSelectedSizes();
     }
 
     /**
@@ -492,9 +523,9 @@ export class Designer {
         const vas = this.productLoader.getVAS();
         const selectedVAS = this.productLoader.getSelectedVAS();
 
-        // Get sizes that have quantity > 0
-        const selectedSizes = this.getSelectedSizes();
-        const hasSelectedSizes = selectedSizes.length > 0;
+        // Get ALL sizes that have quantity > 0 across ALL colors (for neck tags)
+        const allSelectedSizes = this.getAllSelectedSizes();
+        const hasSelectedSizes = allSelectedSizes.length > 0;
 
         if (!vas) {
             container.innerHTML = '<div class="vas-loading"><p>Select a product to see available services</p></div>';
@@ -537,7 +568,7 @@ export class Designer {
                     </div>
                     <div class="vas-service-body">
                         <p class="vas-service-desc">${vas.neckTags.description || 'Custom printed neck label for each item.'}</p>
-                        ${hasSelectedSizes ? this.renderNeckTagsSizes(selectedSizes, selectedVAS.neckTagImages) : `
+                        ${hasSelectedSizes ? this.renderNeckTagsSizes(allSelectedSizes, selectedVAS.neckTagImages) : `
                             <div class="vas-no-sizes-warning">
                                 <i class="fas fa-exclamation-triangle"></i>
                                 <p>You need to pick some sizes first before using this function.</p>
@@ -584,10 +615,10 @@ export class Designer {
     toggleVASService(serviceType, itemElement) {
         const isActive = itemElement.classList.contains('active');
 
-        // For neck tags, check if any sizes have quantity > 0
+        // For neck tags, check if any sizes have quantity > 0 across ALL colors
         if (serviceType === 'neckTags' && !isActive) {
-            const selectedSizes = this.getSelectedSizes();
-            if (selectedSizes.length === 0) {
+            const allSelectedSizes = this.getAllSelectedSizes();
+            if (allSelectedSizes.length === 0) {
                 alert('You need to pick some sizes first before using this function.');
                 return;
             }
