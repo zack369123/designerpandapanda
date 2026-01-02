@@ -243,19 +243,6 @@ export class Designer {
             });
         }
 
-        // Event delegation for Order panel VAS toggles
-        const orderVasOptions = document.getElementById('order-vas-options');
-        if (orderVasOptions) {
-            orderVasOptions.addEventListener('click', (e) => {
-                const vasItem = e.target.closest('.order-vas-item');
-                if (!vasItem) return;
-
-                const vasType = vasItem.dataset.vasType;
-                if (vasType) {
-                    this.toggleOrderVAS(vasType, vasItem);
-                }
-            });
-        }
     }
 
     /**
@@ -354,112 +341,6 @@ export class Designer {
 
         // Update order summary
         this.renderOrderSummary();
-    }
-
-    /**
-     * Render VAS options in Order panel
-     */
-    renderOrderVAS() {
-        const container = document.getElementById('order-vas-options');
-        const vasSection = document.getElementById('order-vas-section');
-
-        if (!container || !this.currentProduct) return;
-
-        const vas = this.currentProduct.vas;
-        const selectedVAS = this.productLoader.getSelectedVAS();
-        const pricing = this.productLoader.getPricing();
-        const totalQty = this.productLoader.getTotalQuantity();
-
-        // Check if any VAS is enabled for this product
-        const hasFoldBag = vas?.foldAndBag?.enabled;
-        const hasNeckTags = vas?.neckTags?.enabled;
-
-        if (!hasFoldBag && !hasNeckTags) {
-            if (vasSection) vasSection.style.display = 'none';
-            return;
-        }
-
-        if (vasSection) vasSection.style.display = 'block';
-
-        let html = '';
-
-        // Fold & Bag
-        if (hasFoldBag) {
-            const isActive = selectedVAS.foldAndBag;
-            const pricePerItem = pricing.foldAndBag || 0;
-            const desc = vas.foldAndBag.description || 'Individual poly bag packaging';
-
-            html += `
-                <div class="order-vas-item ${isActive ? 'active' : ''}" data-vas-type="foldAndBag">
-                    <div class="order-vas-checkbox">
-                        <i class="fas fa-check"></i>
-                    </div>
-                    <div class="order-vas-content">
-                        <div class="order-vas-header">
-                            <span class="order-vas-name"><i class="fas fa-box-open"></i> Fold & Bag</span>
-                            <span class="order-vas-price">+$${pricePerItem.toFixed(2)}/item</span>
-                        </div>
-                        <p class="order-vas-desc">${desc}</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Neck Tags
-        if (hasNeckTags) {
-            const isActive = selectedVAS.neckTags;
-            const pricePerItem = pricing.neckTags || 0;
-            const desc = vas.neckTags.description || 'Custom printed neck label';
-
-            html += `
-                <div class="order-vas-item ${isActive ? 'active' : ''}" data-vas-type="neckTags">
-                    <div class="order-vas-checkbox">
-                        <i class="fas fa-check"></i>
-                    </div>
-                    <div class="order-vas-content">
-                        <div class="order-vas-header">
-                            <span class="order-vas-name"><i class="fas fa-tag"></i> Neck Tags</span>
-                            <span class="order-vas-price">+$${pricePerItem.toFixed(2)}/item</span>
-                        </div>
-                        <p class="order-vas-desc">${desc}</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        container.innerHTML = html;
-    }
-
-    /**
-     * Toggle VAS in Order panel
-     */
-    toggleOrderVAS(vasType, itemElement) {
-        const isActive = itemElement.classList.contains('active');
-
-        // For neck tags, check if any sizes have quantity > 0 across ALL colors
-        if (vasType === 'neckTags' && !isActive) {
-            const totalQty = this.productLoader.getTotalQuantity();
-            if (totalQty === 0) {
-                alert('You need to select some quantities first before enabling this service.');
-                return;
-            }
-        }
-
-        // Toggle state
-        if (vasType === 'foldAndBag') {
-            this.productLoader.toggleFoldAndBag(!isActive);
-        } else if (vasType === 'neckTags') {
-            this.productLoader.toggleNeckTags(!isActive);
-        }
-
-        itemElement.classList.toggle('active');
-        this.events.emit('vas:changed', { vasType, enabled: !isActive });
-
-        // Update order summary to reflect VAS changes
-        this.renderOrderSummary();
-
-        // Also update the VAS panel (Services tab)
-        this.renderVASPanel();
     }
 
     /**
@@ -888,7 +769,6 @@ export class Designer {
         // Render Order panel (sidebar)
         this.renderOrderColors(productData.colors);
         this.renderOrderSizes(productData.sizes);
-        this.renderOrderVAS();
 
         // Render VAS panel (Services tab)
         this.renderVASPanel();
