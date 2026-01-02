@@ -166,6 +166,12 @@
                                     <button class="modal-tab" data-tab="print-areas">
                                         <i class="fas fa-vector-square"></i> Print Areas
                                     </button>
+                                    <button class="modal-tab" data-tab="variations">
+                                        <i class="fas fa-tags"></i> Variations
+                                    </button>
+                                    <button class="modal-tab" data-tab="vas">
+                                        <i class="fas fa-concierge-bell"></i> Value Added Services
+                                    </button>
                                 </div>
 
                                 <form id="product-form">
@@ -279,6 +285,98 @@
                                                     <p class="help-text">
                                                         <i class="fas fa-info-circle"></i>
                                                         This is the actual print size. The blue box position defines where it appears on the product.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Variations Tab -->
+                                    <div class="modal-tab-content" data-tab-content="variations">
+                                        <div class="variations-layout">
+                                            <!-- Sizes Section -->
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <h4><i class="fas fa-ruler"></i> Available Sizes</h4>
+                                                    <button type="button" class="btn small secondary" id="add-size-btn">
+                                                        <i class="fas fa-plus"></i> Add Size
+                                                    </button>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p class="help-text mb-2">
+                                                        <i class="fas fa-info-circle"></i>
+                                                        Define the sizes available for this product. You can add an upcharge for each size.
+                                                    </p>
+                                                    <div id="sizes-list" class="sizes-list">
+                                                        <!-- Sizes will be rendered here -->
+                                                        <div class="empty-state small">
+                                                            <i class="fas fa-ruler"></i>
+                                                            <p>No sizes added yet</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Value Added Services Tab -->
+                                    <div class="modal-tab-content" data-tab-content="vas">
+                                        <div class="vas-layout">
+                                            <p class="help-text mb-2">
+                                                <i class="fas fa-info-circle"></i>
+                                                Configure optional services customers can add to their order.
+                                            </p>
+
+                                            <!-- Fold and Bag -->
+                                            <div class="card vas-card">
+                                                <div class="card-header">
+                                                    <div class="vas-toggle">
+                                                        <label class="switch">
+                                                            <input type="checkbox" id="vas-fold-bag-enabled">
+                                                            <span class="slider"></span>
+                                                        </label>
+                                                        <h4><i class="fas fa-box-open"></i> Fold & Bag</h4>
+                                                    </div>
+                                                </div>
+                                                <div class="card-body vas-options" id="vas-fold-bag-options">
+                                                    <div class="form-row">
+                                                        <div class="form-group">
+                                                            <label>Price ($)</label>
+                                                            <input type="number" id="vas-fold-bag-price" step="0.01" value="0" min="0">
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label>Description (optional)</label>
+                                                            <input type="text" id="vas-fold-bag-desc" placeholder="e.g., Individual poly bag packaging">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Neck Tags -->
+                                            <div class="card vas-card">
+                                                <div class="card-header">
+                                                    <div class="vas-toggle">
+                                                        <label class="switch">
+                                                            <input type="checkbox" id="vas-neck-tags-enabled">
+                                                            <span class="slider"></span>
+                                                        </label>
+                                                        <h4><i class="fas fa-tag"></i> Neck Tags</h4>
+                                                    </div>
+                                                </div>
+                                                <div class="card-body vas-options" id="vas-neck-tags-options">
+                                                    <div class="form-row">
+                                                        <div class="form-group">
+                                                            <label>Price per tag ($)</label>
+                                                            <input type="number" id="vas-neck-tags-price" step="0.01" value="0" min="0">
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label>Description (optional)</label>
+                                                            <input type="text" id="vas-neck-tags-desc" placeholder="e.g., Custom printed neck label">
+                                                        </div>
+                                                    </div>
+                                                    <p class="help-text">
+                                                        <i class="fas fa-lightbulb"></i>
+                                                        Customers will upload neck tag images for each size when ordering.
                                                     </p>
                                                 </div>
                                             </div>

@@ -19,6 +19,15 @@ class AdminApp {
         this.productColors = [];
         this.currentColorIndex = 0;
 
+        // Product sizes data
+        this.productSizes = [];
+
+        // Product Value Added Services data
+        this.productVAS = {
+            foldAndBag: { enabled: false, price: 0, description: '' },
+            neckTags: { enabled: false, price: 0, description: '' }
+        };
+
         this.init();
     }
 
@@ -31,6 +40,8 @@ class AdminApp {
         this.setupDashboard();
         this.setupPrintAreaEditor();
         this.setupColors();
+        this.setupSizes();
+        this.setupVAS();
 
         this.updateStats();
     }
@@ -618,6 +629,187 @@ class AdminApp {
     }
 
     // =========================================================================
+    // Size Management
+    // =========================================================================
+
+    setupSizes() {
+        // Add size button
+        document.getElementById('add-size-btn')?.addEventListener('click', () => {
+            this.addProductSize();
+        });
+    }
+
+    /**
+     * Initialize sizes for a new product
+     */
+    initializeSizes() {
+        this.productSizes = [];
+    }
+
+    /**
+     * Add a new product size
+     */
+    addProductSize() {
+        const commonSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+        const usedSizes = this.productSizes.map(s => s.name);
+        const nextSize = commonSizes.find(s => !usedSizes.includes(s)) || `Size ${this.productSizes.length + 1}`;
+
+        const newSize = {
+            id: this.generateSizeId(),
+            name: nextSize,
+            upcharge: 0
+        };
+        this.productSizes.push(newSize);
+        this.renderSizesList();
+    }
+
+    /**
+     * Remove a product size
+     */
+    removeProductSize(index) {
+        this.productSizes.splice(index, 1);
+        this.renderSizesList();
+    }
+
+    /**
+     * Generate unique size ID
+     */
+    generateSizeId() {
+        return 'size_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+
+    /**
+     * Render the sizes list
+     */
+    renderSizesList() {
+        const container = document.getElementById('sizes-list');
+        if (!container) return;
+
+        if (this.productSizes.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state small">
+                    <i class="fas fa-ruler"></i>
+                    <p>No sizes added yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = this.productSizes.map((size, index) => `
+            <div class="size-item" data-index="${index}">
+                <input type="text" class="size-name-input" value="${size.name}" data-index="${index}" placeholder="Size name">
+                <div class="size-upcharge-group">
+                    <label>Upcharge: $</label>
+                    <input type="number" class="size-upcharge-input" value="${size.upcharge}" data-index="${index}" step="0.01" min="0">
+                </div>
+                <button type="button" class="btn-icon btn-remove-size" data-index="${index}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `).join('');
+
+        // Attach event handlers
+        container.querySelectorAll('.size-name-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                this.productSizes[index].name = e.target.value;
+            });
+        });
+
+        container.querySelectorAll('.size-upcharge-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                this.productSizes[index].upcharge = parseFloat(e.target.value) || 0;
+            });
+        });
+
+        container.querySelectorAll('.btn-remove-size').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.removeProductSize(parseInt(btn.dataset.index));
+            });
+        });
+    }
+
+    // =========================================================================
+    // Value Added Services Management
+    // =========================================================================
+
+    setupVAS() {
+        // Fold & Bag toggle
+        const foldBagCheckbox = document.getElementById('vas-fold-bag-enabled');
+        foldBagCheckbox?.addEventListener('change', (e) => {
+            this.productVAS.foldAndBag.enabled = e.target.checked;
+            this.updateVASCardState('vas-fold-bag', e.target.checked);
+        });
+
+        // Fold & Bag inputs
+        document.getElementById('vas-fold-bag-price')?.addEventListener('change', (e) => {
+            this.productVAS.foldAndBag.price = parseFloat(e.target.value) || 0;
+        });
+        document.getElementById('vas-fold-bag-desc')?.addEventListener('change', (e) => {
+            this.productVAS.foldAndBag.description = e.target.value;
+        });
+
+        // Neck Tags toggle
+        const neckTagsCheckbox = document.getElementById('vas-neck-tags-enabled');
+        neckTagsCheckbox?.addEventListener('change', (e) => {
+            this.productVAS.neckTags.enabled = e.target.checked;
+            this.updateVASCardState('vas-neck-tags', e.target.checked);
+        });
+
+        // Neck Tags inputs
+        document.getElementById('vas-neck-tags-price')?.addEventListener('change', (e) => {
+            this.productVAS.neckTags.price = parseFloat(e.target.value) || 0;
+        });
+        document.getElementById('vas-neck-tags-desc')?.addEventListener('change', (e) => {
+            this.productVAS.neckTags.description = e.target.value;
+        });
+    }
+
+    /**
+     * Update VAS card visual state
+     */
+    updateVASCardState(prefix, enabled) {
+        const card = document.getElementById(prefix + '-enabled')?.closest('.vas-card');
+        if (card) {
+            card.classList.toggle('active', enabled);
+        }
+    }
+
+    /**
+     * Initialize VAS for a new product
+     */
+    initializeVAS() {
+        this.productVAS = {
+            foldAndBag: { enabled: false, price: 0, description: '' },
+            neckTags: { enabled: false, price: 0, description: '' }
+        };
+    }
+
+    /**
+     * Load VAS data into form
+     */
+    loadVASForm() {
+        // Fold & Bag
+        const foldBagEnabled = document.getElementById('vas-fold-bag-enabled');
+        if (foldBagEnabled) {
+            foldBagEnabled.checked = this.productVAS.foldAndBag.enabled;
+            this.updateVASCardState('vas-fold-bag', this.productVAS.foldAndBag.enabled);
+        }
+        document.getElementById('vas-fold-bag-price').value = this.productVAS.foldAndBag.price || 0;
+        document.getElementById('vas-fold-bag-desc').value = this.productVAS.foldAndBag.description || '';
+
+        // Neck Tags
+        const neckTagsEnabled = document.getElementById('vas-neck-tags-enabled');
+        if (neckTagsEnabled) {
+            neckTagsEnabled.checked = this.productVAS.neckTags.enabled;
+            this.updateVASCardState('vas-neck-tags', this.productVAS.neckTags.enabled);
+        }
+        document.getElementById('vas-neck-tags-price').value = this.productVAS.neckTags.price || 0;
+        document.getElementById('vas-neck-tags-desc').value = this.productVAS.neckTags.description || '';
+    }
+
+    // =========================================================================
     // Dashboard
     // =========================================================================
 
@@ -723,16 +915,40 @@ class AdminApp {
                     });
                 }
             }
+            // Load sizes
+            if (product.sizes && product.sizes.length > 0) {
+                this.productSizes = product.sizes.map(s => ({
+                    id: s.id || this.generateSizeId(),
+                    name: s.name || '',
+                    upcharge: s.upcharge || 0
+                }));
+            } else {
+                this.initializeSizes();
+            }
+
+            // Load VAS
+            if (product.vas) {
+                this.productVAS = {
+                    foldAndBag: product.vas.foldAndBag || { enabled: false, price: 0, description: '' },
+                    neckTags: product.vas.neckTags || { enabled: false, price: 0, description: '' }
+                };
+            } else {
+                this.initializeVAS();
+            }
         } else {
             title.textContent = 'Add Product';
             this.initializeViews();
             this.initializeColors();
+            this.initializeSizes();
+            this.initializeVAS();
         }
 
         this.currentViewIndex = 0;
         this.currentColorIndex = 0;
         this.renderViewsList();
         this.renderColorsList();
+        this.renderSizesList();
+        this.loadVASForm();
 
         // Show placeholder in print area editor
         this.printAreaEditor.showPlaceholder();
@@ -765,7 +981,16 @@ class AdminApp {
                 name: c.name,
                 colorCode: c.colorCode,
                 viewImages: c.viewImages || {}
-            }))
+            })),
+            sizes: this.productSizes.map(s => ({
+                id: s.id,
+                name: s.name,
+                upcharge: s.upcharge || 0
+            })),
+            vas: {
+                foldAndBag: { ...this.productVAS.foldAndBag },
+                neckTags: { ...this.productVAS.neckTags }
+            }
         };
 
         if (!product.name) {
@@ -823,6 +1048,7 @@ class AdminApp {
 
             const viewCount = product.views?.length || 0;
             const colorCount = product.colors?.length || 0;
+            const sizeCount = product.sizes?.length || 0;
 
             // Get print size from first view
             const firstView = product.views?.[0];
@@ -840,7 +1066,7 @@ class AdminApp {
                     <div class="grid-item-info">
                         <div class="grid-item-title">${product.name}</div>
                         <div class="grid-item-meta">
-                            ${printWidth}" x ${printHeight}" print • ${viewCount} view(s) • ${colorCount} color(s)
+                            ${printWidth}" x ${printHeight}" • ${viewCount} view(s) • ${colorCount} color(s) • ${sizeCount} size(s)
                         </div>
                         <div class="grid-item-meta">$${product.price?.toFixed(2) || '0.00'}</div>
                     </div>

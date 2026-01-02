@@ -11,6 +11,12 @@ export class ProductLoader {
         this.currentProduct = null;
         this.currentViewIndex = 0;
         this.currentColorIndex = 0;
+        this.currentSizeIndex = -1; // -1 means no size selected
+        this.selectedVAS = {
+            foldAndBag: false,
+            neckTags: false,
+            neckTagImages: {} // { sizeId: imageDataUrl }
+        };
     }
 
     /**
@@ -48,6 +54,12 @@ export class ProductLoader {
         this.currentProduct = product;
         this.currentViewIndex = 0;
         this.currentColorIndex = 0;
+        this.currentSizeIndex = -1;
+        this.selectedVAS = {
+            foldAndBag: false,
+            neckTags: false,
+            neckTagImages: {}
+        };
 
         return this.getProcessedProduct();
     }
@@ -73,6 +85,20 @@ export class ProductLoader {
             isActive: index === this.currentColorIndex
         }));
 
+        // Process sizes for UI display
+        const sizes = (product.sizes || []).map((size, index) => ({
+            id: size.id,
+            name: size.name,
+            upcharge: size.upcharge || 0,
+            isActive: index === this.currentSizeIndex
+        }));
+
+        // Get VAS configuration
+        const vas = product.vas || {
+            foldAndBag: { enabled: false, price: 0, description: '' },
+            neckTags: { enabled: false, price: 0, description: '' }
+        };
+
         return {
             id: product.id,
             name: product.name,
@@ -80,8 +106,12 @@ export class ProductLoader {
             dpi: product.dpi || 300,
             views: views,
             colors: colors,
+            sizes: sizes,
+            vas: vas,
             currentViewIndex: this.currentViewIndex,
-            currentColorIndex: this.currentColorIndex
+            currentColorIndex: this.currentColorIndex,
+            currentSizeIndex: this.currentSizeIndex,
+            selectedVAS: { ...this.selectedVAS }
         };
     }
 
@@ -182,6 +212,102 @@ export class ProductLoader {
         const index = this.currentProduct.colors.findIndex(c => c.id === colorId);
         if (index === -1) return null;
         return this.switchColor(index);
+    }
+
+    // =========================================================================
+    // Size Management
+    // =========================================================================
+
+    /**
+     * Get all sizes for current product
+     */
+    getSizes() {
+        if (!this.currentProduct || !this.currentProduct.sizes) return [];
+        return this.currentProduct.sizes.map((size, index) => ({
+            id: size.id,
+            name: size.name,
+            upcharge: size.upcharge || 0,
+            isActive: index === this.currentSizeIndex
+        }));
+    }
+
+    /**
+     * Get current size
+     */
+    getCurrentSize() {
+        if (!this.currentProduct || !this.currentProduct.sizes || this.currentSizeIndex < 0) return null;
+        return this.currentProduct.sizes[this.currentSizeIndex] || null;
+    }
+
+    /**
+     * Switch to a different size
+     */
+    switchSize(index) {
+        if (!this.currentProduct || !this.currentProduct.sizes) return null;
+        if (index < -1 || index >= this.currentProduct.sizes.length) return null;
+
+        this.currentSizeIndex = index;
+        return this.getCurrentSize();
+    }
+
+    /**
+     * Switch size by size ID
+     */
+    switchSizeById(sizeId) {
+        if (!this.currentProduct || !this.currentProduct.sizes) return null;
+        const index = this.currentProduct.sizes.findIndex(s => s.id === sizeId);
+        this.currentSizeIndex = index;
+        return this.getCurrentSize();
+    }
+
+    // =========================================================================
+    // Value Added Services Management
+    // =========================================================================
+
+    /**
+     * Get VAS configuration for current product
+     */
+    getVAS() {
+        if (!this.currentProduct) return null;
+        return this.currentProduct.vas || {
+            foldAndBag: { enabled: false, price: 0, description: '' },
+            neckTags: { enabled: false, price: 0, description: '' }
+        };
+    }
+
+    /**
+     * Toggle Fold & Bag service
+     */
+    toggleFoldAndBag(enabled) {
+        this.selectedVAS.foldAndBag = enabled;
+    }
+
+    /**
+     * Toggle Neck Tags service
+     */
+    toggleNeckTags(enabled) {
+        this.selectedVAS.neckTags = enabled;
+    }
+
+    /**
+     * Set neck tag image for a size
+     */
+    setNeckTagImage(sizeId, imageDataUrl) {
+        this.selectedVAS.neckTagImages[sizeId] = imageDataUrl;
+    }
+
+    /**
+     * Get selected VAS options
+     */
+    getSelectedVAS() {
+        return { ...this.selectedVAS };
+    }
+
+    /**
+     * Check if neck tags can be enabled (requires sizes)
+     */
+    canEnableNeckTags() {
+        return this.currentProduct?.sizes?.length > 0;
     }
 
     /**

@@ -60,6 +60,12 @@ export class Designer {
         // Set up color selector
         this.setupColorSelector();
 
+        // Set up size selector
+        this.setupSizeSelector();
+
+        // Set up VAS panel
+        this.setupVASPanel();
+
         // If a product ID was provided, load it
         if (this.options.productId) {
             this.loadProduct(this.options.productId);
@@ -197,6 +203,250 @@ export class Designer {
     }
 
     /**
+     * Set up size selector
+     */
+    setupSizeSelector() {
+        const sizeDropdown = document.getElementById('size-dropdown');
+        if (!sizeDropdown) return;
+
+        sizeDropdown.addEventListener('change', (e) => {
+            const sizeId = e.target.value;
+            this.switchSize(sizeId);
+        });
+    }
+
+    /**
+     * Render size dropdown for current product
+     */
+    renderSizeDropdown(sizes) {
+        const dropdown = document.getElementById('size-dropdown');
+        const sizeSelector = document.getElementById('size-selector');
+
+        if (!dropdown) return;
+
+        // Hide selector if no sizes
+        if (!sizes || sizes.length === 0) {
+            if (sizeSelector) sizeSelector.style.display = 'none';
+            return;
+        }
+
+        // Show the selector
+        if (sizeSelector) sizeSelector.style.display = 'flex';
+
+        // Render options
+        dropdown.innerHTML = '<option value="">Select Size</option>' +
+            sizes.map(size => {
+                const upchargeText = size.upcharge > 0 ? ` (+$${size.upcharge.toFixed(2)})` : '';
+                return `<option value="${size.id}" ${size.isActive ? 'selected' : ''}>${size.name}${upchargeText}</option>`;
+            }).join('');
+
+        // Update upcharge badge
+        this.updateSizeUpchargeBadge();
+    }
+
+    /**
+     * Update size upcharge badge visibility
+     */
+    updateSizeUpchargeBadge() {
+        const badge = document.getElementById('size-upcharge');
+        const currentSize = this.productLoader.getCurrentSize();
+
+        if (!badge) return;
+
+        if (currentSize && currentSize.upcharge > 0) {
+            badge.textContent = `+$${currentSize.upcharge.toFixed(2)}`;
+            badge.style.display = 'inline';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    /**
+     * Switch to a different size
+     */
+    switchSize(sizeId) {
+        this.productLoader.switchSizeById(sizeId);
+
+        // Update UI
+        this.updateSizeUpchargeBadge();
+
+        // Emit event
+        this.events.emit('size:changed', { sizeId });
+
+        // Re-render VAS panel (neck tags depend on size)
+        this.renderVASPanel();
+
+        console.log(`Switched to size: ${sizeId}`);
+    }
+
+    /**
+     * Set up VAS panel
+     */
+    setupVASPanel() {
+        // VAS panel interactions are handled through event delegation
+        const vasList = document.getElementById('vas-services-list');
+        if (!vasList) return;
+
+        vasList.addEventListener('click', (e) => {
+            const header = e.target.closest('.vas-service-header');
+            if (header) {
+                const item = header.closest('.vas-service-item');
+                const serviceType = item?.dataset.service;
+                if (serviceType) {
+                    this.toggleVASService(serviceType, item);
+                }
+            }
+
+            // Handle neck tag upload button
+            const uploadBtn = e.target.closest('.neck-tag-upload-btn');
+            if (uploadBtn) {
+                const sizeId = uploadBtn.dataset.sizeId;
+                if (sizeId) {
+                    this.triggerNeckTagUpload(sizeId);
+                }
+            }
+        });
+    }
+
+    /**
+     * Render VAS panel for current product
+     */
+    renderVASPanel() {
+        const container = document.getElementById('vas-services-list');
+        if (!container) return;
+
+        const vas = this.productLoader.getVAS();
+        const sizes = this.productLoader.getSizes();
+        const selectedVAS = this.productLoader.getSelectedVAS();
+
+        if (!vas) {
+            container.innerHTML = '<div class="vas-loading"><p>Select a product to see available services</p></div>';
+            return;
+        }
+
+        let html = '';
+
+        // Fold & Bag
+        if (vas.foldAndBag && vas.foldAndBag.enabled) {
+            const isActive = selectedVAS.foldAndBag;
+            html += `
+                <div class="vas-service-item ${isActive ? 'active' : ''}" data-service="foldAndBag">
+                    <div class="vas-service-header">
+                        <div class="vas-service-info">
+                            <i class="fas fa-box-open"></i>
+                            <span class="vas-service-name">Fold & Bag</span>
+                        </div>
+                        <span class="vas-service-price">+$${vas.foldAndBag.price.toFixed(2)}</span>
+                    </div>
+                    <div class="vas-service-body">
+                        <p class="vas-service-desc">${vas.foldAndBag.description || 'Individual poly bag packaging for each item.'}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Neck Tags
+        if (vas.neckTags && vas.neckTags.enabled) {
+            const isActive = selectedVAS.neckTags;
+            const canEnable = sizes && sizes.length > 0;
+
+            html += `
+                <div class="vas-service-item ${isActive ? 'active' : ''}" data-service="neckTags">
+                    <div class="vas-service-header">
+                        <div class="vas-service-info">
+                            <i class="fas fa-tag"></i>
+                            <span class="vas-service-name">Neck Tags</span>
+                        </div>
+                        <span class="vas-service-price">+$${vas.neckTags.price.toFixed(2)}/ea</span>
+                    </div>
+                    <div class="vas-service-body">
+                        <p class="vas-service-desc">${vas.neckTags.description || 'Custom printed neck label for each item.'}</p>
+                        ${canEnable ? this.renderNeckTagsSizes(sizes, selectedVAS.neckTagImages) : `
+                            <div class="vas-no-sizes-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <p>You need to pick some sizes first before using this function.</p>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        if (!html) {
+            html = '<div class="vas-loading"><p>No value added services available for this product</p></div>';
+        }
+
+        container.innerHTML = html;
+    }
+
+    /**
+     * Render neck tag size upload fields
+     */
+    renderNeckTagsSizes(sizes, neckTagImages = {}) {
+        return `
+            <div class="neck-tags-sizes">
+                ${sizes.map(size => {
+                    const hasImage = neckTagImages[size.id];
+                    return `
+                        <div class="neck-tag-size-item">
+                            <span class="neck-tag-size-label">${size.name}</span>
+                            ${hasImage ? `<img src="${hasImage}" class="neck-tag-preview" alt="${size.name} tag">` : ''}
+                            <button class="neck-tag-upload-btn ${hasImage ? 'has-image' : ''}" data-size-id="${size.id}">
+                                <i class="fas fa-${hasImage ? 'check' : 'upload'}"></i>
+                                ${hasImage ? 'Change' : 'Upload'}
+                            </button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    /**
+     * Toggle a VAS service
+     */
+    toggleVASService(serviceType, itemElement) {
+        const isActive = itemElement.classList.contains('active');
+
+        // For neck tags, check if sizes are available
+        if (serviceType === 'neckTags' && !isActive && !this.productLoader.canEnableNeckTags()) {
+            alert('You need to pick some sizes first before using this function.');
+            return;
+        }
+
+        // Toggle state
+        if (serviceType === 'foldAndBag') {
+            this.productLoader.toggleFoldAndBag(!isActive);
+        } else if (serviceType === 'neckTags') {
+            this.productLoader.toggleNeckTags(!isActive);
+        }
+
+        itemElement.classList.toggle('active');
+        this.events.emit('vas:changed', { serviceType, enabled: !isActive });
+    }
+
+    /**
+     * Trigger file upload for neck tag image
+     */
+    triggerNeckTagUpload(sizeId) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                this.productLoader.setNeckTagImage(sizeId, evt.target.result);
+                this.renderVASPanel();
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
+    }
+
+    /**
      * Check for available products
      */
     checkAvailableProducts() {
@@ -241,6 +491,12 @@ export class Designer {
 
         // Render color swatches
         this.renderColorSwatches(productData.colors);
+
+        // Render size dropdown
+        this.renderSizeDropdown(productData.sizes);
+
+        // Render VAS panel
+        this.renderVASPanel();
 
         // Emit event to load views in StageManager
         this.events.emit('product:loaded', productData);
