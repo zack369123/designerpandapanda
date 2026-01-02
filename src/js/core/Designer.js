@@ -600,11 +600,16 @@ export class Designer {
             html += `
                 <div class="vas-service-item ${isActive ? 'active' : ''}" data-service="foldAndBag">
                     <div class="vas-service-header">
-                        <div class="vas-service-info">
-                            <i class="fas fa-box-open"></i>
-                            <span class="vas-service-name">Fold & Bag</span>
+                        <div class="vas-checkbox">
+                            <i class="fas fa-check"></i>
                         </div>
-                        <span class="vas-service-price">+$${pricePerItem.toFixed(2)}/item</span>
+                        <div class="vas-service-info">
+                            <div class="vas-service-title">
+                                <i class="fas fa-box-open"></i>
+                                <span class="vas-service-name">Fold & Bag</span>
+                            </div>
+                            <span class="vas-service-price">+$${pricePerItem.toFixed(2)} per item</span>
+                        </div>
                     </div>
                     <div class="vas-service-body">
                         <p class="vas-service-desc">${vas.foldAndBag.description || 'Individual poly bag packaging for each item.'}</p>
@@ -621,11 +626,16 @@ export class Designer {
             html += `
                 <div class="vas-service-item ${isActive ? 'active' : ''}" data-service="neckTags">
                     <div class="vas-service-header">
-                        <div class="vas-service-info">
-                            <i class="fas fa-tag"></i>
-                            <span class="vas-service-name">Neck Tags</span>
+                        <div class="vas-checkbox">
+                            <i class="fas fa-check"></i>
                         </div>
-                        <span class="vas-service-price">+$${pricePerItem.toFixed(2)}/item</span>
+                        <div class="vas-service-info">
+                            <div class="vas-service-title">
+                                <i class="fas fa-tag"></i>
+                                <span class="vas-service-name">Neck Tags</span>
+                            </div>
+                            <span class="vas-service-price">+$${pricePerItem.toFixed(2)} per item</span>
+                        </div>
                     </div>
                     <div class="vas-service-body">
                         <p class="vas-service-desc">${vas.neckTags.description || 'Custom printed neck label for each item.'}</p>

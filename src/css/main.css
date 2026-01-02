@@ -873,8 +873,8 @@ body {
 
 .vas-service-header {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-md);
     padding: var(--spacing-md);
     cursor: pointer;
     background: var(--surface-color);
@@ -890,10 +890,64 @@ body {
     background: var(--bg-color);
 }
 
+/* VAS Checkbox Toggle */
+.vas-checkbox {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    background: var(--surface-color);
+}
+
+.vas-checkbox i {
+    font-size: 12px;
+    color: white;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.vas-service-item.active .vas-checkbox {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.vas-service-item.active .vas-checkbox i {
+    opacity: 1;
+}
+
 .vas-service-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vas-service-title {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
+}
+
+.vas-service-title i {
+    color: var(--primary-color);
+    font-size: 16px;
+}
+
+.vas-service-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.vas-service-price {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--secondary-color);
 }
 
 .vas-service-info input[type="checkbox"] {
