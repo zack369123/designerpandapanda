@@ -298,21 +298,40 @@
                                             <div class="card">
                                                 <div class="card-header">
                                                     <h4><i class="fas fa-ruler"></i> Available Sizes</h4>
-                                                    <button type="button" class="btn small secondary" id="add-size-btn">
-                                                        <i class="fas fa-plus"></i> Add Size
-                                                    </button>
                                                 </div>
                                                 <div class="card-body">
-                                                    <p class="help-text mb-2">
-                                                        <i class="fas fa-info-circle"></i>
-                                                        Define the sizes available for this product. You can add an upcharge for each size.
-                                                    </p>
+                                                    <!-- Quick Add Presets -->
+                                                    <div class="size-presets">
+                                                        <span class="preset-label">Quick Add:</span>
+                                                        <button type="button" class="btn small secondary" data-preset="adult">
+                                                            Adult (S-3XL)
+                                                        </button>
+                                                        <button type="button" class="btn small secondary" data-preset="adult-extended">
+                                                            Adult+ (XS-5XL)
+                                                        </button>
+                                                        <button type="button" class="btn small secondary" data-preset="youth">
+                                                            Youth (YS-YXL)
+                                                        </button>
+                                                        <button type="button" class="btn small secondary" data-preset="numeric">
+                                                            Numeric (0-14)
+                                                        </button>
+                                                        <button type="button" class="btn small outline" id="add-size-btn">
+                                                            <i class="fas fa-plus"></i> Custom
+                                                        </button>
+                                                    </div>
+
                                                     <div id="sizes-list" class="sizes-list">
                                                         <!-- Sizes will be rendered here -->
                                                         <div class="empty-state small">
                                                             <i class="fas fa-ruler"></i>
-                                                            <p>No sizes added yet</p>
+                                                            <p>No sizes added yet. Use the buttons above to add sizes.</p>
                                                         </div>
+                                                    </div>
+
+                                                    <div class="sizes-actions" id="sizes-actions" style="display: none;">
+                                                        <button type="button" class="btn small danger" id="clear-sizes-btn">
+                                                            <i class="fas fa-trash"></i> Clear All Sizes
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>

@@ -633,10 +633,68 @@ class AdminApp {
     // =========================================================================
 
     setupSizes() {
-        // Add size button
+        // Add custom size button
         document.getElementById('add-size-btn')?.addEventListener('click', () => {
             this.addProductSize();
         });
+
+        // Clear all sizes button
+        document.getElementById('clear-sizes-btn')?.addEventListener('click', () => {
+            if (confirm('Remove all sizes?')) {
+                this.productSizes = [];
+                this.renderSizesList();
+            }
+        });
+
+        // Size preset buttons
+        document.querySelectorAll('[data-preset]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const preset = btn.dataset.preset;
+                this.addSizePreset(preset);
+            });
+        });
+    }
+
+    /**
+     * Size presets definitions
+     */
+    sizePresets = {
+        'adult': ['S', 'M', 'L', 'XL', '2XL', '3XL'],
+        'adult-extended': ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'],
+        'youth': ['YS', 'YM', 'YL', 'YXL'],
+        'numeric': ['0', '2', '4', '6', '8', '10', '12', '14']
+    };
+
+    /**
+     * Add a preset of sizes
+     */
+    addSizePreset(presetName) {
+        const preset = this.sizePresets[presetName];
+        if (!preset) return;
+
+        // Get existing size names
+        const existingNames = this.productSizes.map(s => s.name.toUpperCase());
+
+        // Add sizes that don't already exist
+        let addedCount = 0;
+        preset.forEach(sizeName => {
+            if (!existingNames.includes(sizeName.toUpperCase())) {
+                this.productSizes.push({
+                    id: this.generateSizeId(),
+                    name: sizeName,
+                    upcharge: 0
+                });
+                addedCount++;
+            }
+        });
+
+        this.renderSizesList();
+
+        if (addedCount === 0) {
+            console.log('All sizes from this preset already exist');
+        } else {
+            console.log(`Added ${addedCount} sizes`);
+        }
     }
 
     /**
