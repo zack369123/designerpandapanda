@@ -713,6 +713,62 @@ export class CanvasManager {
     }
 
     /**
+     * Update just the background/product image (for color changes)
+     * Preserves user's design elements
+     */
+    setBackgroundImage(imageUrl, printArea) {
+        if (!imageUrl) return;
+
+        // Save design objects
+        const designObjects = this.getDesignObjects();
+
+        // Remove only the product image (keep design objects)
+        if (this.productImage) {
+            this.fabricCanvas.remove(this.productImage);
+            this.productImage = null;
+        }
+
+        // Load new product image
+        fabric.Image.fromURL(imageUrl, (img) => {
+            if (!img) return;
+
+            // Scale to fit canvas
+            const scale = Math.min(
+                this.options.width / img.width,
+                this.options.height / img.height
+            ) * 0.95;
+
+            img.scale(scale);
+            img.set({
+                left: this.options.width / 2,
+                top: this.options.height / 2,
+                originX: 'center',
+                originY: 'center',
+                selectable: false,
+                evented: false,
+                excludeFromExport: true,
+                isProductImage: true
+            });
+
+            this.productImage = img;
+
+            // Insert at the back (before all design objects)
+            this.fabricCanvas.insertAt(img, 0);
+
+            // Move print area marker to be second if it exists
+            if (this.printAreaRect) {
+                this.fabricCanvas.bringToFront(this.printAreaRect);
+                // Then move all design objects on top
+                designObjects.forEach(obj => {
+                    this.fabricCanvas.bringToFront(obj);
+                });
+            }
+
+            this.fabricCanvas.renderAll();
+        }, { crossOrigin: 'anonymous' });
+    }
+
+    /**
      * Load product background image (non-selectable)
      */
     loadProductImage(imageUrl) {

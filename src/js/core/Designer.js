@@ -57,6 +57,9 @@ export class Designer {
         // Set up product selector
         this.setupProductSelector();
 
+        // Set up color selector
+        this.setupColorSelector();
+
         // If a product ID was provided, load it
         if (this.options.productId) {
             this.loadProduct(this.options.productId);
@@ -115,6 +118,85 @@ export class Designer {
     }
 
     /**
+     * Set up color selector
+     */
+    setupColorSelector() {
+        // Event delegation for color swatches
+        const swatchesContainer = document.getElementById('color-swatches');
+        if (!swatchesContainer) return;
+
+        swatchesContainer.addEventListener('click', (e) => {
+            const swatch = e.target.closest('.color-swatch');
+            if (!swatch) return;
+
+            const colorId = swatch.dataset.colorId;
+            if (colorId) {
+                this.switchColor(colorId);
+            }
+        });
+    }
+
+    /**
+     * Render color swatches for current product
+     */
+    renderColorSwatches(colors) {
+        const container = document.getElementById('color-swatches');
+        const colorSelector = document.getElementById('color-selector');
+
+        if (!container) return;
+
+        // Hide selector if no colors or only one color
+        if (!colors || colors.length <= 1) {
+            if (colorSelector) colorSelector.style.display = 'none';
+            return;
+        }
+
+        // Show the selector
+        if (colorSelector) colorSelector.style.display = 'flex';
+
+        // Helper to determine if a color is light (needs dark checkmark)
+        const isLightColor = (hex) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            return brightness > 180;
+        };
+
+        container.innerHTML = colors.map(color => `
+            <button
+                class="color-swatch ${color.isActive ? 'active' : ''} ${isLightColor(color.colorCode) ? 'light-color' : ''}"
+                data-color-id="${color.id}"
+                style="background-color: ${color.colorCode}"
+                title="${color.name}"
+            ></button>
+        `).join('');
+    }
+
+    /**
+     * Switch to a different color
+     */
+    switchColor(colorId) {
+        const view = this.productLoader.switchColorById(colorId);
+        if (!view) return;
+
+        // Update color swatches UI
+        const colors = this.productLoader.getColors();
+        this.renderColorSwatches(colors);
+
+        // Reload the current view with new color's image
+        this.events.emit('color:changed', { colorId, view });
+
+        // Update the canvas with new mockup image
+        this.canvas.setBackgroundImage(view.image, view.printArea);
+
+        // Update all stages' images to use new color
+        this.modules.stages.refreshStageImagesForColor(this.productLoader);
+
+        console.log(`Switched to color: ${colorId}`);
+    }
+
+    /**
      * Check for available products
      */
     checkAvailableProducts() {
@@ -157,10 +239,13 @@ export class Designer {
         // Update product info display
         this.updateProductInfo(productData);
 
+        // Render color swatches
+        this.renderColorSwatches(productData.colors);
+
         // Emit event to load views in StageManager
         this.events.emit('product:loaded', productData);
 
-        console.log(`Loaded product: ${productData.name} with ${productData.views.length} view(s)`);
+        console.log(`Loaded product: ${productData.name} with ${productData.views.length} view(s), ${productData.colors?.length || 0} color(s)`);
         return true;
     }
 

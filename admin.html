@@ -37,10 +37,6 @@
                     <i class="fas fa-th-large"></i>
                     <span>Templates</span>
                 </a>
-                <a href="#" class="nav-item" data-section="cliparts">
-                    <i class="fas fa-icons"></i>
-                    <span>Clipart Library</span>
-                </a>
                 <a href="#" class="nav-item" data-section="fonts">
                     <i class="fas fa-font"></i>
                     <span>Fonts</span>
@@ -103,13 +99,6 @@
                             </div>
                         </div>
                         <div class="stat-card">
-                            <i class="fas fa-icons"></i>
-                            <div class="stat-info">
-                                <span class="stat-value" id="stat-cliparts">0</span>
-                                <span class="stat-label">Cliparts</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
                             <i class="fas fa-shopping-bag"></i>
                             <div class="stat-info">
                                 <span class="stat-value" id="stat-orders">0</span>
@@ -129,9 +118,6 @@
                                 </button>
                                 <button class="btn secondary" data-action="new-template">
                                     <i class="fas fa-plus"></i> Create Template
-                                </button>
-                                <button class="btn secondary" data-action="upload-cliparts">
-                                    <i class="fas fa-upload"></i> Upload Cliparts
                                 </button>
                             </div>
                         </div>
@@ -232,16 +218,32 @@
                                     <!-- Print Areas Tab -->
                                     <div class="modal-tab-content" data-tab-content="print-areas">
                                         <div class="print-area-editor-layout">
-                                            <!-- Views List -->
+                                            <!-- Views & Colors Panel -->
                                             <div class="views-panel">
-                                                <div class="panel-header">
-                                                    <h4>Product Views</h4>
-                                                    <button type="button" class="btn small secondary" id="add-view-btn">
-                                                        <i class="fas fa-plus"></i> Add View
-                                                    </button>
+                                                <!-- Views Section -->
+                                                <div class="panel-section">
+                                                    <div class="panel-header">
+                                                        <h4>Product Views</h4>
+                                                        <button type="button" class="btn small secondary" id="add-view-btn">
+                                                            <i class="fas fa-plus"></i> Add
+                                                        </button>
+                                                    </div>
+                                                    <div id="views-list" class="views-list">
+                                                        <!-- Views will be rendered here -->
+                                                    </div>
                                                 </div>
-                                                <div id="views-list" class="views-list">
-                                                    <!-- Views will be rendered here -->
+
+                                                <!-- Colors Section -->
+                                                <div class="panel-section">
+                                                    <div class="panel-header">
+                                                        <h4>Colors</h4>
+                                                        <button type="button" class="btn small secondary" id="add-color-btn">
+                                                            <i class="fas fa-plus"></i> Add
+                                                        </button>
+                                                    </div>
+                                                    <div id="colors-list" class="colors-list">
+                                                        <!-- Colors will be rendered here -->
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -315,66 +317,6 @@
                     </div>
                 </section>
 
-                <!-- Cliparts Section -->
-                <section class="admin-section" data-section="cliparts">
-                    <div class="section-header">
-                        <h3>Clipart Library</h3>
-                        <button class="btn primary" id="upload-cliparts-btn">
-                            <i class="fas fa-upload"></i> Upload Cliparts
-                        </button>
-                    </div>
-                    <div class="section-body">
-                        <div class="filter-bar">
-                            <input type="search" id="clipart-search" placeholder="Search cliparts...">
-                            <select id="clipart-category-filter">
-                                <option value="">All Categories</option>
-                                <option value="icons">Icons</option>
-                                <option value="badges">Badges</option>
-                                <option value="decorations">Decorations</option>
-                                <option value="shapes">Shapes</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div id="cliparts-list" class="items-grid cliparts-grid">
-                            <!-- Cliparts will be rendered here -->
-                        </div>
-                    </div>
-
-                    <!-- Upload Modal -->
-                    <div class="modal" id="clipart-upload-modal">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h3>Upload Cliparts</h3>
-                                <button class="btn-icon modal-close"><i class="fas fa-times"></i></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="form-group">
-                                    <label>Category</label>
-                                    <select id="upload-clipart-category">
-                                        <option value="icons">Icons</option>
-                                        <option value="badges">Badges</option>
-                                        <option value="decorations">Decorations</option>
-                                        <option value="shapes">Shapes</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                <div class="upload-dropzone" id="clipart-dropzone">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <p>Drag & drop images here</p>
-                                    <span>or</span>
-                                    <button type="button" class="btn secondary">Browse Files</button>
-                                    <input type="file" id="clipart-file-input" accept="image/*" multiple hidden>
-                                </div>
-                                <div id="clipart-upload-preview" class="upload-preview-grid"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button class="btn secondary modal-close">Cancel</button>
-                                <button class="btn primary" id="confirm-clipart-upload">Upload</button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
                 <!-- Fonts Section -->
                 <section class="admin-section" data-section="fonts">
                     <div class="section-header">
@@ -412,10 +354,6 @@
                                     <div class="form-group">
                                         <label>Per Image Element ($)</label>
                                         <input type="number" id="price-per-image" step="0.01" value="0">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Per Clipart ($)</label>
-                                        <input type="number" id="price-per-clipart" step="0.01" value="0">
                                     </div>
                                 </div>
                             </div>

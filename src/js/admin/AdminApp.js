@@ -15,6 +15,10 @@ class AdminApp {
         this.productViews = [];
         this.currentViewIndex = 0;
 
+        // Product colors data
+        this.productColors = [];
+        this.currentColorIndex = 0;
+
         this.init();
     }
 
@@ -23,10 +27,10 @@ class AdminApp {
         this.setupModals();
         this.setupModalTabs();
         this.setupProducts();
-        this.setupCliparts();
         this.setupSettings();
         this.setupDashboard();
         this.setupPrintAreaEditor();
+        this.setupColors();
 
         this.updateStats();
     }
@@ -70,7 +74,6 @@ class AdminApp {
             dashboard: 'Dashboard',
             products: 'Products',
             templates: 'Templates',
-            cliparts: 'Clipart Library',
             fonts: 'Fonts',
             pricing: 'Pricing Rules',
             orders: 'Orders',
@@ -92,9 +95,6 @@ class AdminApp {
                 break;
             case 'templates':
                 this.renderTemplates();
-                break;
-            case 'cliparts':
-                this.renderCliparts();
                 break;
             case 'fonts':
                 this.renderFonts();
@@ -120,10 +120,6 @@ class AdminApp {
             case 'new-template':
                 this.showSection('templates');
                 // TODO: Open template editor
-                break;
-            case 'upload-cliparts':
-                this.showSection('cliparts');
-                this.openClipartUploadModal();
                 break;
         }
     }
@@ -237,7 +233,6 @@ class AdminApp {
         this.productViews = [{
             id: this.generateViewId(),
             name: 'Front',
-            image: null,
             printArea: {
                 widthPercent: 40,
                 heightPercent: 50,
@@ -251,6 +246,20 @@ class AdminApp {
     }
 
     /**
+     * Initialize colors for a new product
+     */
+    initializeColors() {
+        const defaultViewId = this.productViews[0]?.id;
+        this.productColors = [{
+            id: this.generateColorId(),
+            name: 'Default',
+            colorCode: '#ffffff',
+            viewImages: {} // { viewId: imageDataUrl }
+        }];
+        this.currentColorIndex = 0;
+    }
+
+    /**
      * Add a new product view
      */
     addProductView() {
@@ -258,7 +267,6 @@ class AdminApp {
         const newView = {
             id: this.generateViewId(),
             name: viewNumber === 2 ? 'Back' : `View ${viewNumber}`,
-            image: null,
             printArea: {
                 widthPercent: 40,
                 heightPercent: 50,
@@ -301,9 +309,13 @@ class AdminApp {
             item.classList.toggle('active', i === index);
         });
 
+        // Get image from current color for this view
+        const currentColor = this.productColors[this.currentColorIndex];
+        const viewImage = currentColor?.viewImages?.[view.id] || null;
+
         // Load image into editor if exists
-        if (view.image) {
-            this.printAreaEditor.loadProductImage(view.image).then(() => {
+        if (viewImage) {
+            this.printAreaEditor.loadProductImage(viewImage).then(() => {
                 if (view.printArea) {
                     this.printAreaEditor.setPrintAreaData(view.printArea);
                 }
@@ -326,25 +338,29 @@ class AdminApp {
         const container = document.getElementById('views-list');
         if (!container) return;
 
-        container.innerHTML = this.productViews.map((view, index) => `
+        const currentColor = this.productColors[this.currentColorIndex];
+
+        container.innerHTML = this.productViews.map((view, index) => {
+            const viewImage = currentColor?.viewImages?.[view.id] || null;
+            return `
             <div class="view-item ${index === this.currentViewIndex ? 'active' : ''}" data-index="${index}">
                 <div class="view-thumb">
-                    ${view.image
-                        ? `<img src="${view.image}" alt="${view.name}">`
+                    ${viewImage
+                        ? `<img src="${viewImage}" alt="${view.name}">`
                         : `<i class="fas fa-image"></i>`
                     }
                 </div>
                 <div class="view-info">
                     <input type="text" class="view-name-input" value="${view.name}" data-index="${index}">
-                    <div class="view-status ${view.image ? 'has-image' : ''}">
-                        ${view.image ? 'Image set' : 'No image'}
+                    <div class="view-status ${viewImage ? 'has-image' : ''}">
+                        ${viewImage ? 'Image set' : 'No image'}
                     </div>
                 </div>
                 <button type="button" class="btn-icon btn-remove-view" data-index="${index}">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
-        `).join('');
+        `}).join('');
 
         // Attach click handlers
         container.querySelectorAll('.view-item').forEach(item => {
@@ -375,6 +391,7 @@ class AdminApp {
 
     /**
      * Handle view image upload - compresses image to fit in localStorage
+     * Stores image in current color's viewImages for current view
      */
     handleViewImageUpload(file) {
         if (!file) return;
@@ -385,11 +402,22 @@ class AdminApp {
             img.onload = () => {
                 // Compress image to reduce storage size
                 const compressedData = this.compressImage(img, 800, 0.7);
-                this.productViews[this.currentViewIndex].image = compressedData;
+
+                // Store in current color's viewImages
+                const currentView = this.productViews[this.currentViewIndex];
+                const currentColor = this.productColors[this.currentColorIndex];
+
+                if (currentColor && currentView) {
+                    if (!currentColor.viewImages) {
+                        currentColor.viewImages = {};
+                    }
+                    currentColor.viewImages[currentView.id] = compressedData;
+                }
 
                 // Load into editor
                 this.printAreaEditor.loadProductImage(compressedData).then(() => {
                     this.renderViewsList();
+                    this.renderColorsList();
                 });
 
                 console.log(`Image compressed: ${(e.target.result.length / 1024).toFixed(0)}KB -> ${(compressedData.length / 1024).toFixed(0)}KB`);
@@ -459,6 +487,136 @@ class AdminApp {
         return 'view_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
     }
 
+    /**
+     * Generate unique color ID
+     */
+    generateColorId() {
+        return 'color_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+
+    // =========================================================================
+    // Color Management
+    // =========================================================================
+
+    setupColors() {
+        // Add color button
+        document.getElementById('add-color-btn')?.addEventListener('click', () => {
+            this.addProductColor();
+        });
+    }
+
+    /**
+     * Add a new product color
+     */
+    addProductColor() {
+        const colorNumber = this.productColors.length + 1;
+        const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+
+        const newColor = {
+            id: this.generateColorId(),
+            name: `Color ${colorNumber}`,
+            colorCode: randomColor,
+            viewImages: {}
+        };
+        this.productColors.push(newColor);
+        this.renderColorsList();
+        this.selectColor(this.productColors.length - 1);
+    }
+
+    /**
+     * Remove a product color
+     */
+    removeProductColor(index) {
+        if (this.productColors.length <= 1) {
+            alert('You must have at least one color.');
+            return;
+        }
+        this.productColors.splice(index, 1);
+        if (this.currentColorIndex >= this.productColors.length) {
+            this.currentColorIndex = this.productColors.length - 1;
+        }
+        this.renderColorsList();
+        this.selectColor(this.currentColorIndex);
+    }
+
+    /**
+     * Select a color for editing
+     */
+    selectColor(index) {
+        this.currentColorIndex = index;
+
+        // Update UI
+        document.querySelectorAll('#colors-list .color-item').forEach((item, i) => {
+            item.classList.toggle('active', i === index);
+        });
+
+        // Re-render views list to show images for this color
+        this.renderViewsList();
+
+        // Reload current view with new color's image
+        this.selectView(this.currentViewIndex);
+    }
+
+    /**
+     * Render the colors list
+     */
+    renderColorsList() {
+        const container = document.getElementById('colors-list');
+        if (!container) return;
+
+        container.innerHTML = this.productColors.map((color, index) => {
+            const imageCount = Object.keys(color.viewImages || {}).length;
+            return `
+            <div class="color-item ${index === this.currentColorIndex ? 'active' : ''}" data-index="${index}">
+                <input type="color" class="color-picker" value="${color.colorCode}" data-index="${index}">
+                <div class="color-info">
+                    <input type="text" class="color-name-input" value="${color.name}" data-index="${index}">
+                    <div class="color-code">${imageCount}/${this.productViews.length} images</div>
+                </div>
+                <button type="button" class="btn-icon btn-remove-color" data-index="${index}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `}).join('');
+
+        // Attach click handlers
+        container.querySelectorAll('.color-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (!e.target.closest('.btn-remove-color') &&
+                    !e.target.closest('.color-name-input') &&
+                    !e.target.closest('.color-picker')) {
+                    this.selectColor(parseInt(item.dataset.index));
+                }
+            });
+        });
+
+        // Color name inputs
+        container.querySelectorAll('.color-name-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                this.productColors[index].name = e.target.value;
+            });
+            input.addEventListener('click', (e) => e.stopPropagation());
+        });
+
+        // Color picker inputs
+        container.querySelectorAll('.color-picker').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                this.productColors[index].colorCode = e.target.value;
+            });
+            input.addEventListener('click', (e) => e.stopPropagation());
+        });
+
+        // Remove buttons
+        container.querySelectorAll('.btn-remove-color').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.removeProductColor(parseInt(btn.dataset.index));
+            });
+        });
+    }
+
     // =========================================================================
     // Dashboard
     // =========================================================================
@@ -471,7 +629,6 @@ class AdminApp {
         const stats = this.store.getStats();
         document.getElementById('stat-products').textContent = stats.products;
         document.getElementById('stat-templates').textContent = stats.templates;
-        document.getElementById('stat-cliparts').textContent = stats.cliparts;
         document.getElementById('stat-orders').textContent = stats.orders;
     }
 
@@ -517,7 +674,7 @@ class AdminApp {
             c.classList.toggle('active', c.dataset.tabContent === 'basic-info');
         });
 
-        // Initialize or load views
+        // Initialize or load views and colors
         if (product) {
             title.textContent = 'Edit Product';
             document.getElementById('product-id').value = product.id;
@@ -528,12 +685,11 @@ class AdminApp {
             document.getElementById('product-category').value = product.category || 'other';
             document.getElementById('product-dpi').value = product.dpi || 300;
 
-            // Load views with print areas
+            // Load views with print areas (no image in view anymore)
             if (product.views && product.views.length > 0) {
                 this.productViews = product.views.map(v => ({
                     id: v.id || this.generateViewId(),
                     name: v.name || 'Untitled',
-                    image: v.image || null,
                     printArea: v.printArea || {
                         widthPercent: 40,
                         heightPercent: 50,
@@ -546,13 +702,37 @@ class AdminApp {
             } else {
                 this.initializeViews();
             }
+
+            // Load colors
+            if (product.colors && product.colors.length > 0) {
+                this.productColors = product.colors.map(c => ({
+                    id: c.id || this.generateColorId(),
+                    name: c.name || 'Default',
+                    colorCode: c.colorCode || '#ffffff',
+                    viewImages: c.viewImages || {}
+                }));
+            } else {
+                // Migration: if old product has images in views, convert to color
+                this.initializeColors();
+                // Check for legacy view images
+                if (product.views?.some(v => v.image)) {
+                    product.views.forEach(v => {
+                        if (v.image) {
+                            this.productColors[0].viewImages[v.id] = v.image;
+                        }
+                    });
+                }
+            }
         } else {
             title.textContent = 'Add Product';
             this.initializeViews();
+            this.initializeColors();
         }
 
         this.currentViewIndex = 0;
+        this.currentColorIndex = 0;
         this.renderViewsList();
+        this.renderColorsList();
 
         // Show placeholder in print area editor
         this.printAreaEditor.showPlaceholder();
@@ -578,8 +758,13 @@ class AdminApp {
             views: this.productViews.map(v => ({
                 id: v.id,
                 name: v.name,
-                image: v.image,
                 printArea: v.printArea
+            })),
+            colors: this.productColors.map(c => ({
+                id: c.id,
+                name: c.name,
+                colorCode: c.colorCode,
+                viewImages: c.viewImages || {}
             }))
         };
 
@@ -588,8 +773,8 @@ class AdminApp {
             return;
         }
 
-        // Validate at least one view has an image
-        const hasImage = product.views.some(v => v.image);
+        // Validate at least one color has an image for at least one view
+        const hasImage = product.colors.some(c => Object.keys(c.viewImages || {}).length > 0);
         if (!hasImage) {
             const proceed = confirm('No product images have been uploaded. The product will be saved without visual print areas. Continue?');
             if (!proceed) return;
@@ -623,10 +808,21 @@ class AdminApp {
         }
 
         container.innerHTML = products.map(product => {
-            // Get thumbnail from first view with an image
-            const firstViewWithImage = product.views?.find(v => v.image);
-            const thumbnail = firstViewWithImage?.image;
+            // Get thumbnail from first color's first view image
+            let thumbnail = null;
+            if (product.colors && product.colors.length > 0) {
+                const firstColor = product.colors[0];
+                const firstViewId = product.views?.[0]?.id;
+                thumbnail = firstColor.viewImages?.[firstViewId];
+            }
+            // Fallback: legacy format with image in view
+            if (!thumbnail && product.views?.length > 0) {
+                const firstViewWithImage = product.views.find(v => v.image);
+                thumbnail = firstViewWithImage?.image;
+            }
+
             const viewCount = product.views?.length || 0;
+            const colorCount = product.colors?.length || 0;
 
             // Get print size from first view
             const firstView = product.views?.[0];
@@ -644,7 +840,7 @@ class AdminApp {
                     <div class="grid-item-info">
                         <div class="grid-item-title">${product.name}</div>
                         <div class="grid-item-meta">
-                            ${printWidth}" x ${printHeight}" print • ${viewCount} view(s)
+                            ${printWidth}" x ${printHeight}" print • ${viewCount} view(s) • ${colorCount} color(s)
                         </div>
                         <div class="grid-item-meta">$${product.price?.toFixed(2) || '0.00'}</div>
                     </div>
@@ -677,129 +873,6 @@ class AdminApp {
                 }
             });
         });
-    }
-
-    // =========================================================================
-    // Cliparts
-    // =========================================================================
-
-    setupCliparts() {
-        document.getElementById('upload-cliparts-btn')?.addEventListener('click', () => {
-            this.openClipartUploadModal();
-        });
-
-        // Dropzone
-        const dropzone = document.getElementById('clipart-dropzone');
-        const fileInput = document.getElementById('clipart-file-input');
-
-        dropzone?.querySelector('.btn')?.addEventListener('click', () => fileInput?.click());
-
-        fileInput?.addEventListener('change', (e) => {
-            this.handleClipartFiles(e.target.files);
-        });
-
-        dropzone?.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropzone.classList.add('drag-over');
-        });
-
-        dropzone?.addEventListener('dragleave', () => {
-            dropzone.classList.remove('drag-over');
-        });
-
-        dropzone?.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('drag-over');
-            this.handleClipartFiles(e.dataTransfer.files);
-        });
-
-        // Confirm upload
-        document.getElementById('confirm-clipart-upload')?.addEventListener('click', () => {
-            this.saveUploadedCliparts();
-        });
-
-        // Category filter
-        document.getElementById('clipart-category-filter')?.addEventListener('change', () => {
-            this.renderCliparts();
-        });
-    }
-
-    pendingCliparts = [];
-
-    openClipartUploadModal() {
-        this.pendingCliparts = [];
-        document.getElementById('clipart-upload-preview').innerHTML = '';
-        this.openModal('clipart-upload-modal');
-    }
-
-    handleClipartFiles(files) {
-        Array.from(files).forEach(file => {
-            if (!file.type.startsWith('image/')) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                this.pendingCliparts.push({
-                    name: file.name,
-                    dataUrl: e.target.result
-                });
-                this.renderClipartPreview();
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    renderClipartPreview() {
-        const container = document.getElementById('clipart-upload-preview');
-        container.innerHTML = this.pendingCliparts.map((clip, idx) => `
-            <div class="upload-preview-item" data-index="${idx}">
-                <img src="${clip.dataUrl}" alt="${clip.name}">
-            </div>
-        `).join('');
-    }
-
-    saveUploadedCliparts() {
-        const category = document.getElementById('upload-clipart-category').value;
-
-        this.pendingCliparts.forEach(clip => {
-            this.store.saveClipart({
-                name: clip.name,
-                dataUrl: clip.dataUrl,
-                category: category
-            });
-        });
-
-        this.pendingCliparts = [];
-        this.closeModal('clipart-upload-modal');
-        this.renderCliparts();
-        this.updateStats();
-    }
-
-    renderCliparts() {
-        const category = document.getElementById('clipart-category-filter')?.value || '';
-        const cliparts = this.store.getClipartsByCategory(category);
-        const container = document.getElementById('cliparts-list');
-
-        if (cliparts.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state" style="grid-column: 1/-1;">
-                    <i class="fas fa-icons"></i>
-                    <p>No cliparts yet. Upload some to get started.</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = cliparts.map(clip => `
-            <div class="grid-item" data-clipart-id="${clip.id}">
-                <div class="grid-item-image">
-                    <img src="${clip.dataUrl}" alt="${clip.name}">
-                </div>
-                <div class="grid-item-info">
-                    <div class="grid-item-title">${clip.name}</div>
-                    <div class="grid-item-meta">${clip.category}</div>
-                </div>
-            </div>
-        `).join('');
     }
 
     // =========================================================================
@@ -897,7 +970,6 @@ class AdminApp {
         const pricing = this.store.getPricing();
         document.getElementById('price-per-text').value = pricing.perText || 0;
         document.getElementById('price-per-image').value = pricing.perImage || 0;
-        document.getElementById('price-per-clipart').value = pricing.perClipart || 0;
         document.getElementById('price-per-view').value = pricing.perView || 0;
         document.getElementById('price-full-coverage').value = pricing.fullCoverage || 0;
     }
@@ -955,7 +1027,6 @@ class AdminApp {
         const pricing = {
             perText: parseFloat(document.getElementById('price-per-text').value) || 0,
             perImage: parseFloat(document.getElementById('price-per-image').value) || 0,
-            perClipart: parseFloat(document.getElementById('price-per-clipart').value) || 0,
             perView: parseFloat(document.getElementById('price-per-view').value) || 0,
             fullCoverage: parseFloat(document.getElementById('price-full-coverage').value) || 0
         };

@@ -93,10 +93,6 @@
                     <i class="fas fa-image"></i>
                     <span>Image</span>
                 </button>
-                <button class="btn-tool" data-tool="add-shape" title="Add Shape">
-                    <i class="fas fa-shapes"></i>
-                    <span>Shape</span>
-                </button>
                 <div class="separator"></div>
                 <button class="btn-tool" data-tool="toggle-grid" title="Toggle Grid">
                     <i class="fas fa-th"></i>
@@ -182,27 +178,6 @@
                 </select>
             </div>
 
-            <!-- Shape tools (shape selected) -->
-            <div class="toolbar-group" data-context="shape" style="display: none;">
-                <div class="tool-group">
-                    <label>Fill:</label>
-                    <input type="color" id="shape-fill" value="#3fc7ba">
-                </div>
-                <div class="tool-group">
-                    <label>Stroke:</label>
-                    <input type="color" id="shape-stroke" value="#000000">
-                </div>
-                <div class="tool-group">
-                    <label>Width:</label>
-                    <input type="number" id="stroke-width" value="0" min="0" max="20">
-                </div>
-                <div class="separator"></div>
-                <div class="tool-group">
-                    <label>Opacity:</label>
-                    <input type="range" id="shape-opacity" min="0" max="100" value="100">
-                </div>
-            </div>
-
             <!-- Multiple selection tools -->
             <div class="toolbar-group" data-context="multiple" style="display: none;">
                 <button class="btn-tool" data-tool="group" title="Group Objects">
@@ -229,14 +204,8 @@
                     <button class="tab-btn active" data-tab="templates" title="Templates">
                         <i class="fas fa-th-large"></i>
                     </button>
-                    <button class="tab-btn" data-tab="cliparts" title="Cliparts">
-                        <i class="fas fa-icons"></i>
-                    </button>
                     <button class="tab-btn" data-tab="text" title="Text">
                         <i class="fas fa-font"></i>
-                    </button>
-                    <button class="tab-btn" data-tab="shapes" title="Shapes">
-                        <i class="fas fa-shapes"></i>
                     </button>
                     <button class="tab-btn" data-tab="uploads" title="Uploads">
                         <i class="fas fa-cloud-upload-alt"></i>
@@ -262,27 +231,6 @@
                                     </div>
                                     <span>Blank</span>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Cliparts Tab -->
-                    <div class="tab-panel" data-panel="cliparts">
-                        <div class="panel-header">
-                            <h3>Cliparts</h3>
-                            <input type="search" placeholder="Search cliparts...">
-                        </div>
-                        <div class="panel-body">
-                            <div class="category-filter">
-                                <select id="clipart-category">
-                                    <option value="all">All Categories</option>
-                                    <option value="icons">Icons</option>
-                                    <option value="badges">Badges</option>
-                                    <option value="decorations">Decorations</option>
-                                </select>
-                            </div>
-                            <div class="item-grid" id="cliparts-grid">
-                                <!-- Cliparts will be loaded here -->
                             </div>
                         </div>
                     </div>
@@ -314,56 +262,6 @@
                                     <button class="text-preset" data-preset="curved">
                                         <span style="font-style: italic;">Curved Text</span>
                                     </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Shapes Tab -->
-                    <div class="tab-panel" data-panel="shapes">
-                        <div class="panel-header">
-                            <h3>Shapes</h3>
-                        </div>
-                        <div class="panel-body">
-                            <div class="shapes-grid">
-                                <button class="shape-btn" data-shape="rect" title="Rectangle">
-                                    <i class="far fa-square"></i>
-                                </button>
-                                <button class="shape-btn" data-shape="circle" title="Circle">
-                                    <i class="far fa-circle"></i>
-                                </button>
-                                <button class="shape-btn" data-shape="triangle" title="Triangle">
-                                    <i class="fas fa-play fa-rotate-270"></i>
-                                </button>
-                                <button class="shape-btn" data-shape="star" title="Star">
-                                    <i class="far fa-star"></i>
-                                </button>
-                                <button class="shape-btn" data-shape="heart" title="Heart">
-                                    <i class="far fa-heart"></i>
-                                </button>
-                                <button class="shape-btn" data-shape="polygon" title="Polygon">
-                                    <i class="fas fa-draw-polygon"></i>
-                                </button>
-                                <button class="shape-btn" data-shape="line" title="Line">
-                                    <i class="fas fa-minus"></i>
-                                </button>
-                                <button class="shape-btn" data-shape="arrow" title="Arrow">
-                                    <i class="fas fa-long-arrow-alt-right"></i>
-                                </button>
-                            </div>
-                            <div class="shape-options">
-                                <h4>Quick Colors</h4>
-                                <div class="color-presets">
-                                    <button class="color-preset" data-color="#000000" style="background:#000000"></button>
-                                    <button class="color-preset" data-color="#ffffff" style="background:#ffffff"></button>
-                                    <button class="color-preset" data-color="#ff0000" style="background:#ff0000"></button>
-                                    <button class="color-preset" data-color="#00ff00" style="background:#00ff00"></button>
-                                    <button class="color-preset" data-color="#0000ff" style="background:#0000ff"></button>
-                                    <button class="color-preset" data-color="#ffff00" style="background:#ffff00"></button>
-                                    <button class="color-preset" data-color="#ff00ff" style="background:#ff00ff"></button>
-                                    <button class="color-preset" data-color="#00ffff" style="background:#00ffff"></button>
-                                    <button class="color-preset" data-color="#3fc7ba" style="background:#3fc7ba"></button>
-                                    <button class="color-preset" data-color="#EE6C4D" style="background:#EE6C4D"></button>
                                 </div>
                             </div>
                         </div>
@@ -416,11 +314,22 @@
 
             <!-- Canvas Area -->
             <main id="canvas-area">
-                <!-- Stage Tabs (for multi-sided products) -->
-                <div id="stage-tabs">
-                    <button class="stage-tab active" data-stage="front">Front</button>
-                    <button class="stage-tab" data-stage="back">Back</button>
-                    <!-- More stages can be added dynamically -->
+                <!-- Product Controls Bar -->
+                <div id="product-controls">
+                    <!-- Stage Tabs (for multi-sided products) -->
+                    <div id="stage-tabs">
+                        <button class="stage-tab active" data-stage="front">Front</button>
+                        <button class="stage-tab" data-stage="back">Back</button>
+                        <!-- More stages can be added dynamically -->
+                    </div>
+
+                    <!-- Color Selector -->
+                    <div id="color-selector">
+                        <span class="color-label">Color:</span>
+                        <div id="color-swatches">
+                            <!-- Colors will be rendered dynamically -->
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Canvas Container -->

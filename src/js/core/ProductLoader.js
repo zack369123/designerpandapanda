@@ -10,6 +10,7 @@ export class ProductLoader {
         this.prefix = 'cpd_'; // Must match admin DataStore prefix
         this.currentProduct = null;
         this.currentViewIndex = 0;
+        this.currentColorIndex = 0;
     }
 
     /**
@@ -46,6 +47,7 @@ export class ProductLoader {
 
         this.currentProduct = product;
         this.currentViewIndex = 0;
+        this.currentColorIndex = 0;
 
         return this.getProcessedProduct();
     }
@@ -57,9 +59,19 @@ export class ProductLoader {
         if (!this.currentProduct) return null;
 
         const product = this.currentProduct;
+        const currentColor = this.getCurrentColor();
+
         const views = (product.views || []).map((view, index) => {
-            return this.processView(view, index);
+            return this.processView(view, index, currentColor);
         });
+
+        // Process colors for UI display
+        const colors = (product.colors || []).map((color, index) => ({
+            id: color.id,
+            name: color.name,
+            colorCode: color.colorCode,
+            isActive: index === this.currentColorIndex
+        }));
 
         return {
             id: product.id,
@@ -67,20 +79,31 @@ export class ProductLoader {
             price: product.price || 0,
             dpi: product.dpi || 300,
             views: views,
-            currentViewIndex: this.currentViewIndex
+            colors: colors,
+            currentViewIndex: this.currentViewIndex,
+            currentColorIndex: this.currentColorIndex
         };
     }
 
     /**
      * Process a single view with calculated print area dimensions
      */
-    processView(view, index) {
+    processView(view, index, currentColor = null) {
         const printArea = view.printArea || {};
+
+        // Get image from current color's viewImages, fallback to legacy view.image
+        let image = null;
+        if (currentColor && currentColor.viewImages && currentColor.viewImages[view.id]) {
+            image = currentColor.viewImages[view.id];
+        } else if (view.image) {
+            // Legacy support: image stored directly on view
+            image = view.image;
+        }
 
         return {
             id: view.id,
             name: view.name || `View ${index + 1}`,
-            image: view.image || null,
+            image: image,
             printArea: {
                 // Percentages for positioning on product image
                 widthPercent: printArea.widthPercent || 40,
@@ -99,9 +122,11 @@ export class ProductLoader {
      */
     getCurrentView() {
         if (!this.currentProduct || !this.currentProduct.views) return null;
+        const currentColor = this.getCurrentColor();
         return this.processView(
             this.currentProduct.views[this.currentViewIndex],
-            this.currentViewIndex
+            this.currentViewIndex,
+            currentColor
         );
     }
 
@@ -114,6 +139,49 @@ export class ProductLoader {
 
         this.currentViewIndex = index;
         return this.getCurrentView();
+    }
+
+    /**
+     * Get current color
+     */
+    getCurrentColor() {
+        if (!this.currentProduct || !this.currentProduct.colors) return null;
+        return this.currentProduct.colors[this.currentColorIndex] || null;
+    }
+
+    /**
+     * Get all colors for current product
+     */
+    getColors() {
+        if (!this.currentProduct || !this.currentProduct.colors) return [];
+        return this.currentProduct.colors.map((color, index) => ({
+            id: color.id,
+            name: color.name,
+            colorCode: color.colorCode,
+            isActive: index === this.currentColorIndex
+        }));
+    }
+
+    /**
+     * Switch to a different color
+     * Returns the current view with new color's image
+     */
+    switchColor(index) {
+        if (!this.currentProduct || !this.currentProduct.colors) return null;
+        if (index < 0 || index >= this.currentProduct.colors.length) return null;
+
+        this.currentColorIndex = index;
+        return this.getCurrentView();
+    }
+
+    /**
+     * Switch color by color ID
+     */
+    switchColorById(colorId) {
+        if (!this.currentProduct || !this.currentProduct.colors) return null;
+        const index = this.currentProduct.colors.findIndex(c => c.id === colorId);
+        if (index === -1) return null;
+        return this.switchColor(index);
     }
 
     /**

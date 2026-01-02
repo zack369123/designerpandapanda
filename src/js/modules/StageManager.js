@@ -35,6 +35,50 @@ export class StageManager {
         this.events.on('product:loaded', (productData) => {
             this.loadProductViews(productData);
         });
+
+        // Listen for color changes - update view images
+        this.events.on('color:changed', ({ colorId, view }) => {
+            this.updateCurrentStageImage(view);
+        });
+    }
+
+    /**
+     * Update all stages' images when color changes
+     * Called via event from Designer.switchColor
+     */
+    updateCurrentStageImage(view) {
+        // The productData object comes from ProductLoader which has been updated
+        // with the new color's images. We need to refresh our stage viewData
+        // to match the current color for all stages.
+
+        // For now, just update the current stage
+        if (!this.currentStage) return;
+
+        const stage = this.stages.get(this.currentStage);
+        if (!stage) return;
+
+        // Update the view data with new image
+        stage.viewData.image = view.image;
+    }
+
+    /**
+     * Refresh all stage images for current color
+     * Called when color changes to ensure stage switches use correct images
+     */
+    refreshStageImagesForColor(productLoader) {
+        if (!productLoader || !this.productData) return;
+
+        // Get updated views from ProductLoader (which has current color)
+        const processedProduct = productLoader.getProcessedProduct();
+        if (!processedProduct || !processedProduct.views) return;
+
+        // Update each stage's viewData with new color's images
+        processedProduct.views.forEach(view => {
+            if (this.stages.has(view.id)) {
+                const stage = this.stages.get(view.id);
+                stage.viewData.image = view.image;
+            }
+        });
     }
 
     /**
